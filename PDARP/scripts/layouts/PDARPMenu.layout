@@ -1,0 +1,207 @@
+FrameWidgetClass PDARPMenu {
+ visible 0
+ color 0 0 0 0
+ position 0 0
+ size 1200 800
+ halign center_ref
+ valign center_ref
+ hexactpos 0
+ vexactpos 0
+ hexactsize 1
+ vexactsize 1
+ {
+  PanelWidgetClass Background {
+   visible 1
+   color 0 0 0 0.65
+   position 0 0
+   size 1 1
+   hexactpos 1
+   vexactpos 1
+   hexactsize 0
+   vexactsize 0
+   style rover_sim_colorable
+  }
+  PanelWidgetClass title_wrapper {
+   visible 1
+   color 0 0 0 0.7843
+   position 0 0
+   size 1 50
+   hexactpos 1
+   vexactpos 1
+   hexactsize 0
+   vexactsize 1
+   style rover_sim_colorable
+   {
+    TextWidgetClass your_id_text {
+     position 10 5
+     size 600 40
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     style Normal
+     text "PDA"
+     font "gui/fonts/metronlight22"
+     "text offset" 10 0
+     "exact text" 1
+     "text valign" center
+    }
+   }
+  }
+  TextListboxWidgetClass contact_list {
+   position 20 70
+   size 300 480
+   halign left_ref
+   valign top_ref
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   "title visible" 1
+   colums "#pda_contact_list;90;   ;10;"
+   lines 1
+   "highlight row" 1
+   font "gui/fonts/metronlight16"
+  }
+  EditBoxWidgetClass add_contact_txt {
+   color 0.9176 0.0314 0.0314 1
+   position 20 730
+   size 300 48
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style DefaultBorder
+   text "  #pda_hint1"
+   "Use default text" 1
+   "exact text" 1
+   font "gui/fonts/Metron14"
+  }
+  ButtonWidgetClass add_contact_btn {
+   color 1 0 0 1
+   position 20 680
+   size 300 40
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "#pda_add_contact"
+   font "gui/fonts/metronlight16"
+  }
+  TextListboxWidgetClass messages_txt {
+   ignorepointer 0
+   position 340 70
+   size 840 640
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   "title visible" 1
+   colums "#pda_sender;15;#pda_message;85;"
+   lines 1
+   "highlight row" 1
+   font "gui/fonts/metronlight16"
+  }
+  EditBoxWidgetClass send_msg_txt {
+   color 0.9176 0.0314 0.0314 1
+   position 340 730
+   size 700 48
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style DefaultBorder
+   text "  #pda_hint2"
+   "limit visible" 0
+   "Use default text" 1
+   "exact text" 1
+   font "gui/fonts/Metron14"
+  }
+  ButtonWidgetClass semd_msg_btn {
+   color 1 0 0 1
+   position 1060 730
+   size 120 48
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "#pda_send"
+   font "gui/fonts/metronlight16"
+  }
+  ButtonWidgetClass delete_contact_btn {
+   color 1 0 0 1
+   position 20 640
+   size 300 40
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "#pda_remove_contact"
+   font "gui/fonts/metronlight16"
+  }
+  TextWidgetClass callibration_txt {
+   ignorepointer 1
+   position 0 -9000
+   size 5000 48
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   font "gui/fonts/metronlight16"
+  }
+  ButtonWidgetClass mute_btn {
+   color 1 0 0 1
+   position 5 5
+   size 120 40
+   halign right_ref
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "Mute"
+   font "gui/fonts/metronlight16"
+  }
+  ButtonWidgetClass rename_contact_btn {
+   color 1 0 0 1
+   position 20 600
+   size 300 40
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "#pda_rename_contact"
+   font "gui/fonts/metronlight16"
+  }
+  ButtonWidgetClass ban_contact_btn {
+   color 1 0 0 1
+   position 20 560
+   size 300 40
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "#pda_ban_contact"
+   font "gui/fonts/metronlight16"
+  }
+  ButtonWidgetClass hideid_btn {
+   color 1 0 0 1
+   position 125 5
+   size 120 40
+   halign right_ref
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style Default
+   text "Hide ID"
+   font "gui/fonts/metronlight16"
+  }
+ }
+}

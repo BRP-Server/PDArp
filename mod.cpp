@@ -1,0 +1,9 @@
+name = "PDARP";
+tooltip = "PDARP - By Ivan Kishchenko & Istar Eldritch";
+overview = "Adds PDA to the game. Allows players to communicate with each other in personal chats.";
+author = "Ivan Kishchenko / Istar Eldritch";
+version = "0.1";
+picture = "PDARP/data/pdarp_logo_m.paa";
+logoSmall = "PDARP/data/pdarp_logo_ss.paa";
+logo = "PDARP/data/pdarp_logo_s.paa";
+logoOver = "PDARP/data/pdarp_logo_s.paa";
