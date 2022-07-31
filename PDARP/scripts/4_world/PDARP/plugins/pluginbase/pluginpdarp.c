@@ -1,14 +1,14 @@
-class PluginPDARP extends PluginBase
+class PluginPDArp extends PluginBase
 {
 	string m_configDir;
 	
-	ref PDARPMenu m_PDARPMenu;
+	ref PDArpMenu m_PDArpMenu;
 	
-	ref array<ref PluginPDARP_Conversation> m_contacts;
+	ref array<ref PluginPDArp_Conversation> m_contacts;
 	
 	ref array<string> m_onlineContacts;
 	
-	ref map<string, ref array<ref PluginPDARP_Comment>> m_comments;
+	ref map<string, ref array<ref PluginPDArp_Comment>> m_comments;
 	
 	string m_steamId;
 	
@@ -16,7 +16,7 @@ class PluginPDARP extends PluginBase
 	
 	const string optionsJsonFilename = "options.json";
 	
-	ref PluginPDARP_Options m_options;
+	ref PluginPDArp_Options m_options;
     
     bool m_enableGlobalChat = false;
     
@@ -26,21 +26,21 @@ class PluginPDARP extends PluginBase
     
     int m_globalChatUnreaded = 0;
 	
-	void PluginPDARP()
+	void PluginPDArp()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginPDARP construct.");
-		m_contacts = new array<ref PluginPDARP_Conversation>();
-		m_comments = new map<string, ref array<ref PluginPDARP_Comment>>();
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp construct.");
+		m_contacts = new array<ref PluginPDArp_Conversation>();
+		m_comments = new map<string, ref array<ref PluginPDArp_Comment>>();
         m_globalMessages = new array<ref Param2<string, string>>;
 		m_onlineContacts = new array<string>();
-		m_options = new PluginPDARP_Options();
-		m_configDir = "$profile:\\PDARP\\";
+		m_options = new PluginPDArp_Options();
+		m_configDir = "$profile:\\PDArp\\";
 	}
 	
-	void ~PluginPDARP()
+	void ~PluginPDArp()
 	{
 		SaveOptionsConfig();
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginPDARP destruct.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp destruct.");
 	}
 	
 	override void OnInit()
@@ -58,59 +58,59 @@ class PluginPDARP extends PluginBase
 	
 	void SaveOptionsConfig()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "SaveOptionsConfig.");
-		JsonFileLoader<ref PluginPDARP_Options>.JsonSaveFile(m_configDir + optionsJsonFilename, m_options);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "SaveOptionsConfig.");
+		JsonFileLoader<ref PluginPDArp_Options>.JsonSaveFile(m_configDir + optionsJsonFilename, m_options);
 	}
 	
 	void LoadOptionsConfig()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "LoadOptionsConfig.");
-		JsonFileLoader<ref PluginPDARP_Options>.JsonLoadFile(m_configDir + optionsJsonFilename, m_options);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "LoadOptionsConfig.");
+		JsonFileLoader<ref PluginPDArp_Options>.JsonLoadFile(m_configDir + optionsJsonFilename, m_options);
 	}
 	
 	void SaveContactsConfig()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "SaveContactsConfig.");
-		JsonFileLoader<ref array<ref PluginPDARP_Conversation>>.JsonSaveFile(m_configDir + contactsJsonFilename, m_contacts);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "SaveContactsConfig.");
+		JsonFileLoader<ref array<ref PluginPDArp_Conversation>>.JsonSaveFile(m_configDir + contactsJsonFilename, m_contacts);
 	}
 	
 	void LoadContactsConfig()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "LoadContactsConfig.");
-		JsonFileLoader<ref array<ref PluginPDARP_Conversation>>.JsonLoadFile(m_configDir + contactsJsonFilename, m_contacts);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "LoadContactsConfig.");
+		JsonFileLoader<ref array<ref PluginPDArp_Conversation>>.JsonLoadFile(m_configDir + contactsJsonFilename, m_contacts);
 	}
 	
 	void SaveCommentsConfig(string uid)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "SaveCommentsConfig: " + uid);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "SaveCommentsConfig: " + uid);
 		
 		if (m_comments.Contains(uid))
 		{
-			ref array<ref PluginPDARP_Comment> comments = m_comments[uid];
+			ref array<ref PluginPDArp_Comment> comments = m_comments[uid];
 			
 			while (comments.Count() > 100)
 			{
 				comments.RemoveOrdered(0);
 			}
 			
-			JsonFileLoader<ref array<ref PluginPDARP_Comment>>.JsonSaveFile(m_configDir + uid + ".json", comments);
+			JsonFileLoader<ref array<ref PluginPDArp_Comment>>.JsonSaveFile(m_configDir + uid + ".json", comments);
 		}
 	}
 	
 	void LoadCommentsConfig(string uid)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "LoadCommentsConfig: " + uid);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "LoadCommentsConfig: " + uid);
 		
 		string fileName = m_configDir + uid + ".json";
 		if (FileExist(fileName))
 		{
-			ref array<ref PluginPDARP_Comment> result = new array<ref PluginPDARP_Comment>(); 
-			JsonFileLoader<ref array<ref PluginPDARP_Comment>>.JsonLoadFile(fileName, result);
+			ref array<ref PluginPDArp_Comment> result = new array<ref PluginPDArp_Comment>(); 
+			JsonFileLoader<ref array<ref PluginPDArp_Comment>>.JsonLoadFile(fileName, result);
 			m_comments[uid] = result;
 		}
 	}
 	
-	ref array<ref PluginPDARP_Comment> GetComments(string uid)
+	ref array<ref PluginPDArp_Comment> GetComments(string uid)
 	{
 		if (!m_comments.Contains(uid))
 		{
@@ -119,7 +119,7 @@ class PluginPDARP extends PluginBase
 
 		if (!m_comments.Contains(uid))
 		{
-			m_comments[uid] = new array<ref PluginPDARP_Comment>();
+			m_comments[uid] = new array<ref PluginPDArp_Comment>();
 		}
 		
 		return m_comments[uid];
@@ -129,15 +129,15 @@ class PluginPDARP extends PluginBase
 	{
 		if (contactId.Length() > 0)
 		{
-			ref array<ref PluginPDARP_Comment> comments = GetComments(contactId);
-			ref PluginPDARP_Comment comment = new PluginPDARP_Comment();
+			ref array<ref PluginPDArp_Comment> comments = GetComments(contactId);
+			ref PluginPDArp_Comment comment = new PluginPDArp_Comment();
 			comment.m_UID = senderId;
 			comment.m_Message = message;
 			comments.Insert(comment);
 			
 			SaveCommentsConfig(contactId);
 			
-			ref PluginPDARP_Conversation contact = FindContact(contactId);
+			ref PluginPDArp_Conversation contact = FindContact(contactId);
 			if (contact != null)
 			{
 				contact.m_Unreaded = contact.m_Unreaded + 1;
@@ -146,14 +146,14 @@ class PluginPDARP extends PluginBase
 			
 			if (IsOpen())
 			{
-				m_PDARPMenu.m_sendMessageStatus = 2;
+				m_PDArpMenu.m_sendMessageStatus = 2;
 			}
 		}
 		else
 		{
 			if (IsOpen())
 			{
-				m_PDARPMenu.m_sendMessageStatus = 0;
+				m_PDArpMenu.m_sendMessageStatus = 0;
 			}
 				
 			ref array<string> request = new array<string>();
@@ -161,13 +161,13 @@ class PluginPDARP extends PluginBase
 			{
 				request.Insert(m_contacts[i].m_UID);
 			}
-			GetRPCManager().SendRPC( PDARPModPreffix, "CheckContacts", new Param1< ref array<string> >( request ), true );
+			GetRPCManager().SendRPC( PDArpModPreffix, "CheckContacts", new Param1< ref array<string> >( request ), true );
 		}
 	}
 	
 	bool IsOpen()
 	{
-		return m_PDARPMenu && m_PDARPMenu.m_active;
+		return m_PDArpMenu && m_PDArpMenu.m_active;
 	}
 	
 	void Open()
@@ -179,24 +179,24 @@ class PluginPDARP extends PluginBase
 		
 		if (GetGame().GetUIManager().GetMenu() != NULL)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "OpenRecipesBookAction ActionCondition blocking by external menu: " + GetGame().GetUIManager().GetMenu());
+			if (PDArpDebugMode) Print(PDArpModPreffix + "OpenRecipesBookAction ActionCondition blocking by external menu: " + GetGame().GetUIManager().GetMenu());
 			return;
 		}
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginPDARP prepare open menu");
-		m_PDARPMenu = new PDARPMenu;
-		m_PDARPMenu.Init();
-		GetGame().GetUIManager().ShowScriptedMenu( m_PDARPMenu, NULL );
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginPDARP post open menu: " + m_PDARPMenu);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp prepare open menu");
+		m_PDArpMenu = new PDArpMenu;
+		m_PDArpMenu.Init();
+		GetGame().GetUIManager().ShowScriptedMenu( m_PDArpMenu, NULL );
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp post open menu: " + m_PDArpMenu);
 	}
 	
-	ref PluginPDARP_Conversation FindContact(string uid)
+	ref PluginPDArp_Conversation FindContact(string uid)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "FindContact: " + uid);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "FindContact: " + uid);
 		
 		for (int i = 0; i < m_contacts.Count(); i++)
 		{
-			ref PluginPDARP_Conversation item = m_contacts[i];
+			ref PluginPDArp_Conversation item = m_contacts[i];
 			if (item.m_UID == uid)
 			{
 				return item;
@@ -208,14 +208,14 @@ class PluginPDARP extends PluginBase
 	
 	void AddContact(string uid, string name)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact X1: " + uid + "; " + name);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact X1: " + uid + "; " + name);
 		if (uid.Length() > 0 && name.Length() > 0)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact X2: " + uid + "; " + name);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact X2: " + uid + "; " + name);
 			if (FindContact(uid) == null)
 			{
-				if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact X3: " + uid + "; " + name);
-				ref PluginPDARP_Conversation conv = new PluginPDARP_Conversation();
+				if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact X3: " + uid + "; " + name);
+				ref PluginPDArp_Conversation conv = new PluginPDArp_Conversation();
 				conv.m_UID = uid;
 				conv.m_Name = name;
 				conv.m_Unreaded = 0;
@@ -228,15 +228,15 @@ class PluginPDARP extends PluginBase
 		
 		if (IsOpen())
 		{
-			m_PDARPMenu.m_addContactStatus = 2;
+			m_PDArpMenu.m_addContactStatus = 2;
 		}
 	}
 	
 	void RemoveContact(string uid)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "RemoveContact: " + uid);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "RemoveContact: " + uid);
 		
-		ref PluginPDARP_Conversation contactToDelete = FindContact(uid);
+		ref PluginPDArp_Conversation contactToDelete = FindContact(uid);
 		if (contactToDelete == null)
 		{
 			return;
@@ -259,9 +259,9 @@ class PluginPDARP extends PluginBase
 	
 	void RenameContact(string uid, string newName)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "RenameContact: " + uid);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "RenameContact: " + uid);
 		
-		ref PluginPDARP_Conversation contactToRename = FindContact(uid);
+		ref PluginPDArp_Conversation contactToRename = FindContact(uid);
 		if (contactToRename == null)
 		{
 			return;
@@ -273,9 +273,9 @@ class PluginPDARP extends PluginBase
 	
 	void BanUnbanContact(string uid)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "BanContact: " + uid);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "BanContact: " + uid);
 		
-		ref PluginPDARP_Conversation contactToRename = FindContact(uid);
+		ref PluginPDArp_Conversation contactToRename = FindContact(uid);
 		if (contactToRename == null)
 		{
 			return;
@@ -287,45 +287,45 @@ class PluginPDARP extends PluginBase
 	
 	void Close()
 	{
-		if (m_PDARPMenu)
+		if (m_PDArpMenu)
 		{
-			m_PDARPMenu.m_active = false;
+			m_PDArpMenu.m_active = false;
 		}
 
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginPDARP close menu: " + m_PDARPMenu);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp close menu: " + m_PDArpMenu);
 	}
 };
 
-class PluginPDARP_Conversation
+class PluginPDArp_Conversation
 {
 	string m_UID;
 	string m_Name;
 	int m_Unreaded;
 	bool m_IsBanned;
 
-	void PluginPDARP_Conversation()
+	void PluginPDArp_Conversation()
 	{
 	
 	}
 };
 
-class PluginPDARP_Comment
+class PluginPDArp_Comment
 {
 	string m_UID;
 	string m_Message;
 	
-	void PluginPDARP_Comment()
+	void PluginPDArp_Comment()
 	{
 	
 	}
 };
 
-class PluginPDARP_Options
+class PluginPDArp_Options
 {
 	bool m_Muted;
 	bool m_HideId;
 	
-	void PluginPDARP_Options()
+	void PluginPDArp_Options()
 	{
 	
 	}

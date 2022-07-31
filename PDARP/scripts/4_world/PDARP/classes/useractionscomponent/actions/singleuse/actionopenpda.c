@@ -2,7 +2,7 @@ class ActionOpenPDA extends ActionSingleUseBase
 {
 	void ActionOpenPDA()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "ActionOpenPDA construct.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "ActionOpenPDA construct.");
 		m_CommandUID        = DayZPlayerConstants.CMD_ACTIONMOD_OPENITEM_ONCE;
 		m_CommandUIDProne = DayZPlayerConstants.CMD_ACTIONFB_OPENITEM_ONCE;
 	}
@@ -34,15 +34,15 @@ class ActionOpenPDA extends ActionSingleUseBase
 		{
 			if (GetGame().IsClient())
 			{
-				PluginPDARP pluginPDARP;
-				Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+				PluginPDArp pluginPDArp;
+				Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 				
-				if (!pluginPDARP)
+				if (!pluginPDArp)
 				{
 					return false;
 				}
 				
-				if (pluginPDARP.IsOpen())
+				if (pluginPDArp.IsOpen())
 				{
 					return false;
 				}
@@ -63,14 +63,14 @@ class ActionOpenPDA extends ActionSingleUseBase
 	{		
 		action_data.m_MainItem.GetCompEM().ConsumeEnergy(0.01);
 		
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "ActionOpenPDA execute => Plug: " + pluginPDARP);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "ActionOpenPDA execute => Plug: " + pluginPDArp);
 		
-		if (pluginPDARP && !pluginPDARP.IsOpen())
+		if (pluginPDArp && !pluginPDArp.IsOpen())
 		{					
-			pluginPDARP.Open();
+			pluginPDArp.Open();
 		}
 	}
 

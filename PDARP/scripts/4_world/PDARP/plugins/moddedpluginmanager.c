@@ -4,7 +4,7 @@ modded class PluginManager
 	{
 		if (GetGame().IsClient())
 		{
-			RegisterPlugin("PluginPDARP", true, false);
+			RegisterPlugin("PluginPDArp", true, false);
 		}
 		
 		RegisterPlugin("PluginLogicPDA", true, true);

@@ -2,6 +2,6 @@ modded class DayZGame
 {
 	void DayZGame()
 	{
-		GetUApi().RegisterGroup("PDARP", "PDARP");
+		GetUApi().RegisterGroup("PDArp", "PDArp");
 	}
 };

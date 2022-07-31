@@ -9,21 +9,21 @@ modded class MissionGameplay
 	{
 		super.OnKeyRelease(key);
 		
-		PluginPDARP pluginPDARP;
+		PluginPDArp pluginPDArp;
 		if ( key == KeyCode.KC_ESCAPE )
 		{	
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
-			if (pluginPDARP && pluginPDARP.IsOpen())
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			if (pluginPDArp && pluginPDArp.IsOpen())
 			{
-				pluginPDARP.Close();
+				pluginPDArp.Close();
 			}
 		}
 		else if ( key == KeyCode.KC_RETURN )
 		{
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
-			if (pluginPDARP && pluginPDARP.IsOpen())
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			if (pluginPDArp && pluginPDArp.IsOpen())
 			{
-				pluginPDARP.m_PDARPMenu.m_externalSendEvent = true;
+				pluginPDArp.m_PDArpMenu.m_externalSendEvent = true;
 			}
 		}
 	}

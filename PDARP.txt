@@ -1,2 +1,0 @@
-prefix=PDARP\
-product=dayz ugc

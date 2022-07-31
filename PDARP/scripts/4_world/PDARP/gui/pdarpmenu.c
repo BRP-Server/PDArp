@@ -1,4 +1,4 @@
-class PDARPMenu extends UIScriptedMenu
+class PDArpMenu extends UIScriptedMenu
 {
 	bool m_active = false;
 	bool m_dirty = false;
@@ -30,22 +30,22 @@ class PDARPMenu extends UIScriptedMenu
 	bool m_externalSendEvent = false;
 	bool m_sendFuncEnabled = true;
 	
-	void PDARPMenu()
+	void PDArpMenu()
 	{				
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PDARPMenu construct");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PDArpMenu construct");
 	}	
 	
-	void ~PDARPMenu()
+	void ~PDArpMenu()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PDARPMenu destruct");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PDArpMenu destruct");
 		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		player.GetInputController().SetDisabled(false);
 	}
 
     override Widget Init()
     {
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PDARPMenu init");
-		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "PDARP/scripts/layouts/PDARPMenu.layout" );
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PDArpMenu init");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "PDArp/scripts/layouts/PDArpMenu.layout" );
 
         m_contactList = TextListboxWidget.Cast( layoutRoot.FindAnyWidget( "contact_list" ) );
 		m_yourIdText = TextWidget.Cast( layoutRoot.FindAnyWidget( "your_id_text" ) );
@@ -63,18 +63,18 @@ class PDARPMenu extends UIScriptedMenu
 		UpdateMutedButton();
 		UpdateHideIdButton();
 				
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 				
 		ref array<string> request = new array<string>();
-		for (int i = 0; i < pluginPDARP.m_contacts.Count(); i++)
+		for (int i = 0; i < pluginPDArp.m_contacts.Count(); i++)
 		{
-			request.Insert(pluginPDARP.m_contacts[i].m_UID);
+			request.Insert(pluginPDArp.m_contacts[i].m_UID);
 		}
 		
 		if (!m_active) 
 		{
-			GetRPCManager().SendRPC( PDARPModPreffix, "CheckContacts", new Param1< ref array<string> >( request ), true );
+			GetRPCManager().SendRPC( PDArpModPreffix, "CheckContacts", new Param1< ref array<string> >( request ), true );
 			m_yourIdText.SetText("#pda_loading");
 			m_message.Enable(false);
 			m_send.Enable(false);
@@ -87,27 +87,27 @@ class PDARPMenu extends UIScriptedMenu
 	
 	void FillContactsList()
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "FillContactsList");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "FillContactsList");
 		
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
         int itemId;
         int rowShift = 0;
 		int selectedRow = m_lastSelectedContact;
 		m_contactList.ClearItems();
 			
-        if (pluginPDARP.m_enableGlobalChat)
+        if (pluginPDArp.m_enableGlobalChat)
 		{
 			rowShift = rowShift + 1;
 			itemId = m_contactList.AddItem("#pda_global_chat", NULL, 0);
-			m_contactList.SetItem(itemId, "" + pluginPDARP.m_globalChatUnreaded, NULL, 1);
+			m_contactList.SetItem(itemId, "" + pluginPDArp.m_globalChatUnreaded, NULL, 1);
 			m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.0, 0.529, 0.858));
 		}
             
-		for (int i = 0; i < pluginPDARP.m_contacts.Count(); i++)
+		for (int i = 0; i < pluginPDArp.m_contacts.Count(); i++)
 		{
-			ref PluginPDARP_Conversation contact = pluginPDARP.m_contacts[i];
+			ref PluginPDArp_Conversation contact = pluginPDArp.m_contacts[i];
 			itemId = m_contactList.AddItem(contact.m_Name, NULL, 0);
 			m_contactList.SetItem(itemId, "" + contact.m_Unreaded, NULL, 1);
 			
@@ -115,7 +115,7 @@ class PDARPMenu extends UIScriptedMenu
 			{
 				m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.8, 0.02, 0.02));
 			}
-			else if (pluginPDARP.m_onlineContacts.Find(contact.m_UID) != -1)
+			else if (pluginPDArp.m_onlineContacts.Find(contact.m_UID) != -1)
 			{
 				m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.2, 0.8, 0.02));
 			}
@@ -125,16 +125,16 @@ class PDARPMenu extends UIScriptedMenu
 			}			
 		}
 		
-		if (selectedRow >= 0 && selectedRow < pluginPDARP.m_contacts.Count() + rowShift)
+		if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SelectConversation: X1 " + selectedRow);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X1 " + selectedRow);
 			m_lastSelectedContact = selectedRow;
 			m_contactList.SelectRow(selectedRow);
 			SelectConversation(selectedRow);
 		}
-		else if (pluginPDARP.m_contacts.Count() + rowShift > 0)
+		else if (pluginPDArp.m_contacts.Count() + rowShift > 0)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SelectConversation: X2 " + 0);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X2 " + 0);
 			m_lastSelectedContact = 0;
 			m_contactList.SelectRow(0);
 			SelectConversation(0);
@@ -149,28 +149,28 @@ class PDARPMenu extends UIScriptedMenu
 	
 	void SelectConversation(int id)
 	{
-		if (PDARPDebugMode) Print(PDARPModPreffix + "SelectConversation: " + id);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: " + id);
 		
 		int rowShift = 0;		
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		ref array<ref Param2<string, string>> confMessages = null;
 		
-		if (pluginPDARP.m_enableGlobalChat)
+		if (pluginPDArp.m_enableGlobalChat)
 		{
 			if (id == rowShift)
 			{
-				confMessages = pluginPDARP.m_globalMessages;
-				pluginPDARP.m_globalChatUnreaded = 0;
+				confMessages = pluginPDArp.m_globalMessages;
+				pluginPDArp.m_globalChatUnreaded = 0;
 				m_contactList.SetItem(id, "0", NULL, 1);
 			}
 			
 			rowShift = rowShift + 1;
 		}
 		
-		if ( (id < 0) || (id >= pluginPDARP.m_contacts.Count() + rowShift) )
+		if ( (id < 0) || (id >= pluginPDArp.m_contacts.Count() + rowShift) )
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "No need to select conversation: " + id);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "No need to select conversation: " + id);
 			m_chat.ClearItems();
 			m_message.Enable(false);
 			m_send.Enable(false);
@@ -247,12 +247,12 @@ class PDARPMenu extends UIScriptedMenu
 		}
 		else
 		{
-			ref PluginPDARP_Conversation contact = pluginPDARP.m_contacts[id - rowShift];		
-			ref array<ref PluginPDARP_Comment> comments = pluginPDARP.GetComments(contact.m_UID);
+			ref PluginPDArp_Conversation contact = pluginPDArp.m_contacts[id - rowShift];		
+			ref array<ref PluginPDArp_Comment> comments = pluginPDArp.GetComments(contact.m_UID);
 
 			for (i = 0; i < comments.Count(); i++)
 			{
-				ref PluginPDARP_Comment comment = comments[i];	
+				ref PluginPDArp_Comment comment = comments[i];	
 				if (comment.m_UID == GetGame().GetPlayer().GetIdentity().GetId())
 				{
 					autor = "Me";
@@ -304,7 +304,7 @@ class PDARPMenu extends UIScriptedMenu
 			m_chat.SelectRow(chatLinesCount);
 			m_chat.EnsureVisible(chatLinesCount);
 			
-			if ( (pluginPDARP.m_onlineContacts.Find(contact.m_UID) == -1) || (contact.m_IsBanned) )
+			if ( (pluginPDArp.m_onlineContacts.Find(contact.m_UID) == -1) || (contact.m_IsBanned) )
 			{
 				m_message.Enable(false);
 				m_send.Enable(false);
@@ -321,7 +321,7 @@ class PDARPMenu extends UIScriptedMenu
 			{
 				contact.m_Unreaded = 0;
 				m_contactList.SetItem(id, "" + contact.m_Unreaded, NULL, 1);
-				pluginPDARP.SaveContactsConfig();
+				pluginPDArp.SaveContactsConfig();
 			}
 		}
 	}
@@ -338,14 +338,14 @@ class PDARPMenu extends UIScriptedMenu
 		
 		if (m_addContactStatus == 2)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SelectConversation: X5");
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
 			FillContactsList();
 			m_addContactStatus = 0;
 		}
 		
 		if (m_sendMessageStatus == 2)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SelectConversation: X3 " + m_lastSelectedContact);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X3 " + m_lastSelectedContact);
 			FillContactsList();
 			m_sendMessageStatus = 0;
 		}
@@ -378,11 +378,11 @@ class PDARPMenu extends UIScriptedMenu
 		
 		if (m_dirty)
 		{
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SelectConversation by dirty: X6");
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation by dirty: X6");
 			
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
-			m_yourIdText.SetText("#pda_user_id " + pluginPDARP.m_steamId);		
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			m_yourIdText.SetText("#pda_user_id " + pluginPDArp.m_steamId);		
 			
 			FillContactsList();
 			m_dirty = false;
@@ -425,7 +425,7 @@ class PDARPMenu extends UIScriptedMenu
 	}
 
 	override bool OnKeyPress(Widget w, int x, int y, int key) {
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnKeyPress: " + w.GetName());
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnKeyPress: " + w.GetName());
 		
 		string boxText;
 		if (w.GetName() == m_addContactTxt.GetName()) {
@@ -445,8 +445,8 @@ class PDARPMenu extends UIScriptedMenu
 
 	bool SendMessageEvent()
 	{
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
 		if (m_sendFuncEnabled && m_sendMessageTimeout <= 0 && m_sendMessageStatus == 0)
 		{
@@ -460,13 +460,13 @@ class PDARPMenu extends UIScriptedMenu
 				}
 				
 				int rowShift = 0;
-				if (pluginPDARP.m_enableGlobalChat)
+				if (pluginPDArp.m_enableGlobalChat)
 				{
 					if (selectedRow == rowShift)
 					{
 						m_sendMessageTimeout = 1.0;
 						m_sendMessageStatus = 1;
-						GetRPCManager().SendRPC( PDARPModPreffix, "SendGlobalMessage", new Param1<string>( message ), true );
+						GetRPCManager().SendRPC( PDArpModPreffix, "SendGlobalMessage", new Param1<string>( message ), true );
 						m_message.SetText("");	
 						return true;				
 					}
@@ -474,13 +474,13 @@ class PDARPMenu extends UIScriptedMenu
 					rowShift = rowShift + 1;
 				}
 				
-				ref PluginPDARP_Conversation msgContact = pluginPDARP.m_contacts[selectedRow - rowShift];
+				ref PluginPDArp_Conversation msgContact = pluginPDArp.m_contacts[selectedRow - rowShift];
 				string target = msgContact.m_UID;					
-				if ( (pluginPDARP.m_onlineContacts.Find(target) != -1) && (!msgContact.m_IsBanned) )
+				if ( (pluginPDArp.m_onlineContacts.Find(target) != -1) && (!msgContact.m_IsBanned) )
 				{					
 					m_sendMessageTimeout = 0.25;
 					m_sendMessageStatus = 1;
-					GetRPCManager().SendRPC( PDARPModPreffix, "SendMessage", new Param2<string, string>( target, message ), true );
+					GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param2<string, string>( target, message ), true );
 					m_message.SetText("");
 					return true;
 				}
@@ -493,14 +493,14 @@ class PDARPMenu extends UIScriptedMenu
 	override bool OnClick(Widget w, int x, int y, int button) {
 		super.OnClick(w, x, y, button);
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnClick: " + w.GetName());
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnClick: " + w.GetName());
 		
 		if (button == MouseState.LEFT)
 		{
 			int rowShift;
 			int selectedRow;
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 			
 			if (w == m_addContactBtn)
 			{
@@ -510,7 +510,7 @@ class PDARPMenu extends UIScriptedMenu
 					if (contactId.LengthUtf8() <= m_contactMaxLength && contactId.LengthUtf8() > 0) {
 						m_addContactStatus = 1;
 						m_addContactTimeout = 1;
-						GetRPCManager().SendRPC( PDARPModPreffix, "AddContact", new Param1<string>( contactId ), true );
+						GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param1<string>( contactId ), true );
 						return true;
 					}	
 				}
@@ -525,7 +525,7 @@ class PDARPMenu extends UIScriptedMenu
 			{
 				selectedRow = m_lastSelectedContact;
 				rowShift = 0;
-				if (pluginPDARP.m_enableGlobalChat)
+				if (pluginPDArp.m_enableGlobalChat)
 				{				
 					if (selectedRow == rowShift)
 					{
@@ -535,10 +535,10 @@ class PDARPMenu extends UIScriptedMenu
 					rowShift = rowShift + 1;
 				}
 				
-				if (selectedRow >= 0 && selectedRow < pluginPDARP.m_contacts.Count() + rowShift)
+				if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
 				{
-					string contactToDeleteUid = pluginPDARP.m_contacts[selectedRow - rowShift].m_UID;
-					pluginPDARP.RemoveContact(contactToDeleteUid);
+					string contactToDeleteUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
+					pluginPDArp.RemoveContact(contactToDeleteUid);
 					m_dirty = true;
 					return true;
 				}
@@ -546,14 +546,14 @@ class PDARPMenu extends UIScriptedMenu
 			
 			if (w == m_mute_btn)
 			{
-				pluginPDARP.m_options.m_Muted = !pluginPDARP.m_options.m_Muted;
+				pluginPDArp.m_options.m_Muted = !pluginPDArp.m_options.m_Muted;
 				UpdateMutedButton();
 				return true;
 			}
 			
 			if (w == m_hideId_btn)
 			{
-				pluginPDARP.m_options.m_HideId = !pluginPDARP.m_options.m_HideId;
+				pluginPDArp.m_options.m_HideId = !pluginPDArp.m_options.m_HideId;
 				UpdateHideIdButton();
 				return true;
 			}
@@ -562,7 +562,7 @@ class PDARPMenu extends UIScriptedMenu
 			{
 				selectedRow = m_lastSelectedContact;
 				rowShift = 0;
-				if (pluginPDARP.m_enableGlobalChat)
+				if (pluginPDArp.m_enableGlobalChat)
 				{				
 					if (selectedRow == rowShift)
 					{
@@ -572,13 +572,13 @@ class PDARPMenu extends UIScriptedMenu
 					rowShift = rowShift + 1;
 				}
 				
-				if (selectedRow >= 0 && selectedRow < pluginPDARP.m_contacts.Count() + rowShift)
+				if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
 				{
 					string newContactName = m_addContactTxt.GetText();
 					if (newContactName.LengthUtf8() <= m_contactMaxLength && newContactName.LengthUtf8() > 0)
 					{
-						string contactToRenameUid = pluginPDARP.m_contacts[selectedRow - rowShift].m_UID;
-						pluginPDARP.RenameContact(contactToRenameUid, newContactName);
+						string contactToRenameUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
+						pluginPDArp.RenameContact(contactToRenameUid, newContactName);
 						m_dirty = true;
 						return true;
 					}
@@ -589,7 +589,7 @@ class PDARPMenu extends UIScriptedMenu
 			{
 				selectedRow = m_lastSelectedContact;
 				rowShift = 0;
-				if (pluginPDARP.m_enableGlobalChat)
+				if (pluginPDArp.m_enableGlobalChat)
 				{				
 					if (selectedRow == rowShift)
 					{
@@ -599,10 +599,10 @@ class PDARPMenu extends UIScriptedMenu
 					rowShift = rowShift + 1;
 				}
 				
-				if (selectedRow >= 0 && selectedRow < pluginPDARP.m_contacts.Count() + rowShift)
+				if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
 				{
-					string contactToBanUid = pluginPDARP.m_contacts[selectedRow - rowShift].m_UID;
-					pluginPDARP.BanUnbanContact(contactToBanUid);
+					string contactToBanUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
+					pluginPDArp.BanUnbanContact(contactToBanUid);
 					m_dirty = true;
 					return true;
 				}
@@ -614,10 +614,10 @@ class PDARPMenu extends UIScriptedMenu
 	
 	void UpdateMutedButton()
 	{
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
-		if (pluginPDARP.m_options.m_Muted)
+		if (pluginPDArp.m_options.m_Muted)
 		{
 			m_mute_btn.SetText("#pda_unmute");
 		}
@@ -629,10 +629,10 @@ class PDARPMenu extends UIScriptedMenu
 	
 	void UpdateHideIdButton()
 	{
-		PluginPDARP pluginPDARP;
-		Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
-		if (pluginPDARP.m_options.m_HideId)
+		if (pluginPDArp.m_options.m_HideId)
 		{
 			m_hideId_btn.SetText("#pda_unhideId");
 			m_yourIdText.Show(false);
@@ -647,7 +647,7 @@ class PDARPMenu extends UIScriptedMenu
 	override bool OnChange(Widget w, int x, int y, bool finished) {
 		super.OnChange(w, x, y, finished);
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnChange: " + w.GetName());
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnChange: " + w.GetName());
 		
 		string boxText;
 		if (w.GetName() == m_addContactTxt.GetName()) {
@@ -671,7 +671,7 @@ class PDARPMenu extends UIScriptedMenu
 	{
 		super.OnItemSelected(w, x, y, row, column, oldRow, oldColumn);
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnItemSelected: " + w.GetName());
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnItemSelected: " + w.GetName());
 		
 		if (w == m_contactList)
 		{

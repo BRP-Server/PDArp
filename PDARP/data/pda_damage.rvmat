@@ -8,7 +8,7 @@ PixelShaderID="Super";
 VertexShaderID="Super";
 class Stage1
 {
-	texture="PDARP\data\pda_nohq.paa";
+	texture="PDArp\data\pda_nohq.paa";
 	uvSource="tex";
 	class uvTransform
 	{

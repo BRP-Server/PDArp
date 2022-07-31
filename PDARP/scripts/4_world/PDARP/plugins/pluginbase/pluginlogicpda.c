@@ -2,45 +2,45 @@ class PluginLogicPDA extends PluginBase
 {	
 	EffectSound effect;
     
-    ref PluginPDARP_ServerOptions m_server_options;
+    ref PluginPDArp_ServerOptions m_server_options;
 	
 	void PluginLogicPDA()
 	{
         if (GetGame().IsServer())
         {
-            string serverOptionsPath = "$profile:\\PDARP_ServerOptions.json";
+            string serverOptionsPath = "$profile:\\PDArp_ServerOptions.json";
             if (FileExist(serverOptionsPath))
             {
-                JsonFileLoader<ref PluginPDARP_ServerOptions>.JsonLoadFile(serverOptionsPath, m_server_options);
+                JsonFileLoader<ref PluginPDArp_ServerOptions>.JsonLoadFile(serverOptionsPath, m_server_options);
             }
             else
             {
-                m_server_options = new PluginPDARP_ServerOptions;
-                JsonFileLoader<ref PluginPDARP_ServerOptions>.JsonSaveFile(serverOptionsPath, m_server_options);
+                m_server_options = new PluginPDArp_ServerOptions;
+                JsonFileLoader<ref PluginPDArp_ServerOptions>.JsonSaveFile(serverOptionsPath, m_server_options);
             }
         }
         
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginLogicPDA construct.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginLogicPDA construct.");
 	}
 	
 	void ~PluginLogicPDA()
 	{
         if (m_server_options) delete m_server_options;
         
-		if (PDARPDebugMode) Print(PDARPModPreffix + "PluginLogicPDA destruct.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginLogicPDA destruct.");
 	}
 	
 	override void OnInit()
 	{
-		GetRPCManager().AddRPC( PDARPModPreffix, "GetVisualUserId", this, SingleplayerExecutionType.Both ); 
-		GetRPCManager().AddRPC( PDARPModPreffix, "AddContact", this, SingleplayerExecutionType.Both ); 
-		GetRPCManager().AddRPC( PDARPModPreffix, "CheckContacts", this, SingleplayerExecutionType.Both ); 
-		GetRPCManager().AddRPC( PDARPModPreffix, "SendMessage", this, SingleplayerExecutionType.Both );
-        GetRPCManager().AddRPC( PDARPModPreffix, "SendGlobalMessage", this, SingleplayerExecutionType.Both );
+		GetRPCManager().AddRPC( PDArpModPreffix, "GetVisualUserId", this, SingleplayerExecutionType.Both ); 
+		GetRPCManager().AddRPC( PDArpModPreffix, "AddContact", this, SingleplayerExecutionType.Both ); 
+		GetRPCManager().AddRPC( PDArpModPreffix, "CheckContacts", this, SingleplayerExecutionType.Both ); 
+		GetRPCManager().AddRPC( PDArpModPreffix, "SendMessage", this, SingleplayerExecutionType.Both );
+        GetRPCManager().AddRPC( PDArpModPreffix, "SendGlobalMessage", this, SingleplayerExecutionType.Both );
 				
 		if (GetGame().IsClient())
 		{
-			GetRPCManager().SendRPC( PDARPModPreffix, "GetVisualUserId", new Param1<string>( "" ), true );
+			GetRPCManager().SendRPC( PDArpModPreffix, "GetVisualUserId", new Param1<string>( "" ), true );
 		}
 	}
 	
@@ -51,7 +51,7 @@ class PluginLogicPDA extends PluginBase
 			Param2< string, string > serverData;			
         	if ( !ctx.Read( serverData ) ) return;
 			
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SendMessage RPC called on server from " + sender);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SendMessage RPC called on server from " + sender);
 			
 			string senderId = sender.GetId();
 			string senderName = sender.GetName();
@@ -69,15 +69,15 @@ class PluginLogicPDA extends PluginBase
 						if (HasWorkingPDA(player))
 						{
 							string identityName = identity.GetName();
-							if (PDARPDebugMode) Print(PDARPModPreffix + "Found target player 1; S: " + sender + "I: " + identity);
-							if (PDARPDebugMode) Print(PDARPModPreffix + "RPC data 1: " + identityId + " | " + identityName + " | " + senderId + " | " + serverData.param2);
+							if (PDArpDebugMode) Print(PDArpModPreffix + "Found target player 1; S: " + sender + "I: " + identity);
+							if (PDArpDebugMode) Print(PDArpModPreffix + "RPC data 1: " + identityId + " | " + identityName + " | " + senderId + " | " + serverData.param2);
 							
-							GetRPCManager().SendRPC( PDARPModPreffix, "SendMessage", new Param4< string, string, string, string >( identityId, identityName, senderId, serverData.param2 ), true, sender );
+							GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param4< string, string, string, string >( identityId, identityName, senderId, serverData.param2 ), true, sender );
 							
 							if (!(senderId == identityId))
 							{
-								if (PDARPDebugMode) Print(PDARPModPreffix + "RPC data 2: " + senderId + " | " + senderName + " | " + senderId + " | " + serverData.param2);
-								GetRPCManager().SendRPC( PDARPModPreffix, "SendMessage", new Param4< string, string, string, string >( senderId, senderName, senderId, serverData.param2 ), true, identity );
+								if (PDArpDebugMode) Print(PDArpModPreffix + "RPC data 2: " + senderId + " | " + senderName + " | " + senderId + " | " + serverData.param2);
+								GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param4< string, string, string, string >( senderId, senderName, senderId, serverData.param2 ), true, identity );
 							}
 							
 							return;
@@ -86,41 +86,41 @@ class PluginLogicPDA extends PluginBase
 				}
 			}
 			
-			GetRPCManager().SendRPC( PDARPModPreffix, "SendMessage", new Param4< string, string, string, string >( "", "", "", "" ), true, sender );
+			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param4< string, string, string, string >( "", "", "", "" ), true, sender );
 		}
 		else
 		{
 			Param4< string, string, string, string > clientData;			
         	if ( !ctx.Read( clientData ) ) return;
 			
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SendMessage RPC called on cleint from " + sender);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SendMessage RPC called on cleint from " + sender);
 			
 			string contactId = clientData.param1;
 			string contactName = clientData.param2;
 			string userSenderId = clientData.param3;
 			string message = clientData.param4;
 					
-			if (PDARPDebugMode) Print(PDARPModPreffix + "SendMessage received: " + contactId + " | " + contactName + " | " + userSenderId + " | " + message);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SendMessage received: " + contactId + " | " + contactName + " | " + userSenderId + " | " + message);
 			
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));			
-			if (pluginPDARP)
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));			
+			if (pluginPDArp)
 			{
-				ref PluginPDARP_Conversation msgContact = pluginPDARP.FindContact(contactId);
+				ref PluginPDArp_Conversation msgContact = pluginPDArp.FindContact(contactId);
 				if (msgContact == null)
 				{
-					pluginPDARP.AddContact(contactId, contactName);
-					msgContact = pluginPDARP.FindContact(contactId);
+					pluginPDArp.AddContact(contactId, contactName);
+					msgContact = pluginPDArp.FindContact(contactId);
 				}
 				
 				if (!msgContact.m_IsBanned)
 				{
-					if (userSenderId == contactId && !pluginPDARP.m_options.m_Muted)
+					if (userSenderId == contactId && !pluginPDArp.m_options.m_Muted)
 					{	
 						GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
 					}
 					
-					pluginPDARP.AddComment(contactId, userSenderId, message);
+					pluginPDArp.AddComment(contactId, userSenderId, message);
 				}
 			}
 		}
@@ -167,7 +167,7 @@ class PluginLogicPDA extends PluginBase
 			Param1< array<string> > serverData;			
         	if ( !ctx.Read( serverData ) ) return;
 			
-			if (PDARPDebugMode) Print(PDARPModPreffix + "CheckContacts RPC called on server from " + sender);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "CheckContacts RPC called on server from " + sender);
 			
 			ref array<string> request = new array<string>();
 			request.Copy(serverData.param1);
@@ -188,31 +188,31 @@ class PluginLogicPDA extends PluginBase
 						string identityId = identity.GetId();
 						if (uid == identityId && HasWorkingPDA(player))
 						{
-							if (PDARPDebugMode) Print(PDARPModPreffix + "CheckContacts Player " + identity.GetName() + " is online.");
+							if (PDArpDebugMode) Print(PDArpModPreffix + "CheckContacts Player " + identity.GetName() + " is online.");
 							result.Insert(uid);
 						}
 					}
 				}
 			}
 			
-			GetRPCManager().SendRPC( PDARPModPreffix, "CheckContacts", new Param1< ref array<string> >( result ), true, sender );
+			GetRPCManager().SendRPC( PDArpModPreffix, "CheckContacts", new Param1< ref array<string> >( result ), true, sender );
 		}
 		else
         {
 			Param1< array<string> > clientData;
         	if ( !ctx.Read( clientData ) ) return;
 			
-			if (PDARPDebugMode) Print(PDARPModPreffix + "CheckContacts RPC called on client from " + sender);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "CheckContacts RPC called on client from " + sender);
 			
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
-			if (pluginPDARP)
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			if (pluginPDArp)
 			{
-				pluginPDARP.m_onlineContacts.Clear();
-				pluginPDARP.m_onlineContacts.Copy(clientData.param1);
-				if (pluginPDARP.IsOpen())
+				pluginPDArp.m_onlineContacts.Clear();
+				pluginPDArp.m_onlineContacts.Copy(clientData.param1);
+				if (pluginPDArp.IsOpen())
 				{
-					pluginPDARP.m_PDARPMenu.m_dirty = true;
+					pluginPDArp.m_PDArpMenu.m_dirty = true;
 				}
 			}
 		}
@@ -222,24 +222,24 @@ class PluginLogicPDA extends PluginBase
     {   
 		if( type == CallType.Server )
         {
-			if (PDARPDebugMode) Print(PDARPModPreffix + "GetVisualUserId RPC called on server from " + sender);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "GetVisualUserId RPC called on server from " + sender);
 			string userVisualId = sender.GetPlainId();
-			GetRPCManager().SendRPC( PDARPModPreffix, "GetVisualUserId", new Param3<string, bool, bool>( userVisualId, m_server_options.m_enableGlobalChannel, m_server_options.m_enableGlobalChannelSound ), true, sender );
+			GetRPCManager().SendRPC( PDArpModPreffix, "GetVisualUserId", new Param3<string, bool, bool>( userVisualId, m_server_options.m_enableGlobalChannel, m_server_options.m_enableGlobalChannelSound ), true, sender );
 		}
 		else
         {
-			if (PDARPDebugMode) Print(PDARPModPreffix + "GetVisualUserId RPC called on client from " + sender);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "GetVisualUserId RPC called on client from " + sender);
 			
 			Param3<string, bool, bool> clientData;
         	if ( !ctx.Read( clientData ) ) return;
 			
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
-			if (pluginPDARP)
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			if (pluginPDArp)
 			{
-				pluginPDARP.m_steamId = clientData.param1;
-                pluginPDARP.m_enableGlobalChat = clientData.param2;
-                pluginPDARP.m_enableGlobalChatSound = clientData.param3;
+				pluginPDArp.m_steamId = clientData.param1;
+                pluginPDArp.m_enableGlobalChat = clientData.param2;
+                pluginPDArp.m_enableGlobalChatSound = clientData.param3;
 			}
 		}
 	}
@@ -252,7 +252,7 @@ class PluginLogicPDA extends PluginBase
         	if ( !ctx.Read( serverData ) ) return;
 			string requestName = serverData.param1;
 			
-            if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact RPC called on server from " + sender + " | " + requestName);
+            if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact RPC called on server from " + sender + " | " + requestName);
 			
 			ref array<Man> players = new array<Man>();
 			GetGame().GetPlayers(players);
@@ -267,32 +267,32 @@ class PluginLogicPDA extends PluginBase
 					string contactName = identity.GetName();
 					if ( (contactPlainId == requestName) || (contactName == requestName) ) 
 					{
-						if (PDARPDebugMode) Print(PDARPModPreffix + "Found identity: " + identity + " | " + contactPlainId + " | " + contactName);
-						if (!(sender.GetId() == contactSteamId) || PDARPDebugMode)
+						if (PDArpDebugMode) Print(PDArpModPreffix + "Found identity: " + identity + " | " + contactPlainId + " | " + contactName);
+						if (!(sender.GetId() == contactSteamId) || PDArpDebugMode)
 						{
-							if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact player with id " + requestName + " found: " + contactSteamId + "; " + contactName);
-							GetRPCManager().SendRPC( PDARPModPreffix, "AddContact", new Param2<string, string>( contactSteamId, contactName ), true, sender );
+							if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact player with id " + requestName + " found: " + contactSteamId + "; " + contactName);
+							GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, string>( contactSteamId, contactName ), true, sender );
 							return;
 						}
 					}
 				}
 			}
 			
-			if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact player with id " + requestName + " not found.");			
-			GetRPCManager().SendRPC( PDARPModPreffix, "AddContact", new Param2<string, string>( "", "" ), true, sender );
+			if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact player with id " + requestName + " not found.");			
+			GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, string>( "", "" ), true, sender );
         }
         else
         {
 			Param2< string, string > clientData;
         	if ( !ctx.Read( clientData ) ) return;
 			
-			if (PDARPDebugMode) Print(PDARPModPreffix + "AddContact RPC called on client from " + sender + "; " + clientData.param1 + " " + clientData.param2);
+			if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact RPC called on client from " + sender + "; " + clientData.param1 + " " + clientData.param2);
 			
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));
-			if (pluginPDARP && pluginPDARP.IsOpen())
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			if (pluginPDArp && pluginPDArp.IsOpen())
 			{
-				pluginPDARP.AddContact(clientData.param1, clientData.param2);
+				pluginPDArp.AddContact(clientData.param1, clientData.param2);
 			}
         }
     }
@@ -301,27 +301,27 @@ class PluginLogicPDA extends PluginBase
 	{
 		if( type == CallType.Client )
 		{
-			PluginPDARP pluginPDARP;
-			Class.CastTo(pluginPDARP, GetPlugin(PluginPDARP));			
-			if (pluginPDARP && pluginPDARP.m_enableGlobalChat)
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));			
+			if (pluginPDArp && pluginPDArp.m_enableGlobalChat)
 			{
 				Param2< string, string > clientData;			
         		if ( !ctx.Read( clientData ) ) return;
 				
-				pluginPDARP.m_globalMessages.Insert(clientData);
-                pluginPDARP.m_globalChatUnreaded = pluginPDARP.m_globalChatUnreaded + 1;
+				pluginPDArp.m_globalMessages.Insert(clientData);
+                pluginPDArp.m_globalChatUnreaded = pluginPDArp.m_globalChatUnreaded + 1;
 				
 				PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 				if (player && HasWorkingPDA(player))
 				{
-					if (!pluginPDARP.m_options.m_Muted && pluginPDARP.m_enableGlobalChatSound)
+					if (!pluginPDArp.m_options.m_Muted && pluginPDArp.m_enableGlobalChatSound)
 					{	
 						GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
 					}
 					
-					if (pluginPDARP.IsOpen())
+					if (pluginPDArp.IsOpen())
 					{
-						pluginPDARP.m_PDARPMenu.m_sendMessageStatus = 2;
+						pluginPDArp.m_PDArpMenu.m_sendMessageStatus = 2;
 					}
 				}
 			}
@@ -335,12 +335,12 @@ class PluginLogicPDA extends PluginBase
 			
 			if (!m_server_options.m_enableGlobalChannel) return;
 			
-			GetRPCManager().SendRPC( PDARPModPreffix, "SendGlobalMessage", new Param2< string, string >( sender.GetName(), serverData.param1 ), true );	
+			GetRPCManager().SendRPC( PDArpModPreffix, "SendGlobalMessage", new Param2< string, string >( sender.GetName(), serverData.param1 ), true );	
         }
 	}
 };
 
-class PluginPDARP_ServerOptions
+class PluginPDArp_ServerOptions
 {
     bool m_enableGlobalChannel = false;
     bool m_enableGlobalChannelSound = false;

@@ -4,7 +4,7 @@ class ItemPDA : ItemBase
 	{
 		super.EEInit();
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "EEInit.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "EEInit.");
 		UpdateVisualStyle();
 	}
 	
@@ -13,14 +13,14 @@ class ItemPDA : ItemBase
 		super.SetActions();
 		
 		AddAction(ActionOpenPDA);
-		if (PDARPDebugMode) Print(PDARPModPreffix + "SetActions.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "SetActions.");
 	}
 	
 	override void OnIsPlugged(EntityAI source_device)
 	{
 		super.OnIsPlugged(source_device);
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnIsPlugged.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnIsPlugged.");
 		SetVisualStyle(1);
 	}
 	
@@ -28,7 +28,7 @@ class ItemPDA : ItemBase
 	{
 		super.OnIsUnplugged(last_energy_source);
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnIsUnplugged.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnIsUnplugged.");
 		SetVisualStyle(0);
 	}
 	
@@ -36,7 +36,7 @@ class ItemPDA : ItemBase
 	{
 		super.OnWork(consumed_energy);
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnWork.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnWork.");
 		UpdateVisualStyle();
 	}
 	
@@ -44,7 +44,7 @@ class ItemPDA : ItemBase
 	{
 		super.OnWorkStart();
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnWorkStart.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnWorkStart.");
 		UpdateVisualStyle();
 	}
 	
@@ -52,7 +52,7 @@ class ItemPDA : ItemBase
 	{
 		super.OnWorkStop();
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnWorkStop.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnWorkStop.");
 		UpdateVisualStyle();
 	}
 	
@@ -60,7 +60,7 @@ class ItemPDA : ItemBase
 	{
 		super.OnInitEnergy();
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnInitEnergy.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnInitEnergy.");
 		UpdateVisualStyle();
 	}
 	
@@ -68,7 +68,7 @@ class ItemPDA : ItemBase
 	{
 		super.OnVariablesSynchronized();
 		
-		if (PDARPDebugMode) Print(PDARPModPreffix + "OnVariablesSynchronized.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "OnVariablesSynchronized.");
 		UpdateVisualStyle();
 	}
 	
@@ -91,6 +91,6 @@ class ItemPDA : ItemBase
 		TStringArray textures = GetHiddenSelectionsTextures();
 		string texture = textures.Get(id);
 		SetObjectTexture(0, texture);
-		if (PDARPDebugMode) Print(PDARPModPreffix + "Change PDA texture to " + id + " =>" + texture);
+		if (PDArpDebugMode) Print(PDArpModPreffix + "Change PDA texture to " + id + " =>" + texture);
 	}
 };

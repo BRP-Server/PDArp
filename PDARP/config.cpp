@@ -1,6 +1,6 @@
 class CfgPatches
 {
-	class PDARP_scripts
+	class PDArp_scripts
 	{
 		units[]={};
 		requiredAddons[]=
@@ -13,7 +13,7 @@ class CfgPatches
 };
 class CfgMods
 {
-	class PDARP
+	class PDArp
 	{
 		type="mod";
 		class defs
@@ -23,7 +23,7 @@ class CfgMods
 				value="";
 				files[]=
 				{
-					"PDARP/scripts/3_Game"
+					"PDArp/scripts/3_Game"
 				};
 			};
 			class worldScriptModule
@@ -31,7 +31,7 @@ class CfgMods
 				value="";
 				files[]=
 				{
-					"PDARP/scripts/4_World"
+					"PDArp/scripts/4_World"
 				};
 			};
 			class missionScriptModule
@@ -39,7 +39,7 @@ class CfgMods
 				value="";
 				files[]=
 				{
-					"PDARP/scripts/5_Mission"
+					"PDArp/scripts/5_Mission"
 				};
 			};
 			class imageSets
@@ -58,15 +58,15 @@ class CfgVehicles
 		title="#pda_item_name";
 		displayName="#pda_item_name";
 		descriptionShort="#pda_item_desc";
-		model="PDARP\pda.p3d";
+		model="PDArp/pda.p3d";
 		hiddenSelections[]=
 		{
 			"body"
 		};
 		hiddenSelectionsTextures[]=
 		{
-			"PDARP\data\pda_co.paa",
-			"PDARP\data\pda_on_co.paa"
+			"PDArp/data/pda_co.paa",
+			"PDArp/data/pda_on_co.paa"
 		};
 		animClass="ItemPDA";
 		itemSize[]={2,2};
@@ -108,7 +108,7 @@ class CfgVehicles
 							1,
 							
 							{
-								"PDARP\data\pda.rvmat"
+								"PDArp/data/pda.rvmat"
 							}
 						},
 						
@@ -116,7 +116,7 @@ class CfgVehicles
 							0.69999999,
 							
 							{
-								"PDARP\data\pda.rvmat"
+								"PDArp/data/pda.rvmat"
 							}
 						},
 						
@@ -124,7 +124,7 @@ class CfgVehicles
 							0.5,
 							
 							{
-								"PDARP\data\pda_damage.rvmat"
+								"PDArp/data/pda_damage.rvmat"
 							}
 						},
 						
@@ -132,7 +132,7 @@ class CfgVehicles
 							0.30000001,
 							
 							{
-								"PDARP\data\pda_damage.rvmat"
+								"PDArp/data/pda_damage.rvmat"
 							}
 						},
 						
@@ -140,7 +140,7 @@ class CfgVehicles
 							0,
 							
 							{
-								"PDARP\data\pda_destruct.rvmat"
+								"PDArp/data/pda_destruct.rvmat"
 							}
 						}
 					};
@@ -158,12 +158,12 @@ class CfgSoundShaders
 		{
 			
 			{
-				"PDARP\data\pda_message",
+				"PDArp/data/pda_message",
 				1
 			},
 			
 			{
-				"PDARP\data\pda_message",
+				"PDArp/data/pda_message",
 				1
 			}
 		};
