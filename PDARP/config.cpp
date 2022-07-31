@@ -23,7 +23,7 @@ class CfgMods
 				value="";
 				files[]=
 				{
-					"PDArp/scripts/3_Game"
+					"pdarp/scripts/3_Game"
 				};
 			};
 			class worldScriptModule
@@ -31,7 +31,7 @@ class CfgMods
 				value="";
 				files[]=
 				{
-					"PDArp/scripts/4_World"
+					"pdarp/scripts/4_World"
 				};
 			};
 			class missionScriptModule
@@ -39,7 +39,7 @@ class CfgMods
 				value="";
 				files[]=
 				{
-					"PDArp/scripts/5_Mission"
+					"pdarp/scripts/5_Mission"
 				};
 			};
 			class imageSets
@@ -58,15 +58,15 @@ class CfgVehicles
 		title="#pda_item_name";
 		displayName="#pda_item_name";
 		descriptionShort="#pda_item_desc";
-		model="PDArp/pda.p3d";
+		model="pdarp\pda.p3d";
 		hiddenSelections[]=
 		{
 			"body"
 		};
 		hiddenSelectionsTextures[]=
 		{
-			"PDArp/data/pda_co.paa",
-			"PDArp/data/pda_on_co.paa"
+			"pdarp\data\pda_co.paa",
+			"pdarp\data\pda_on_co.paa"
 		};
 		animClass="ItemPDA";
 		itemSize[]={2,2};
@@ -108,7 +108,7 @@ class CfgVehicles
 							1,
 							
 							{
-								"PDArp/data/pda.rvmat"
+								"pdarp\data\pda.rvmat"
 							}
 						},
 						
@@ -116,7 +116,7 @@ class CfgVehicles
 							0.69999999,
 							
 							{
-								"PDArp/data/pda.rvmat"
+								"pdarp\data\pda.rvmat"
 							}
 						},
 						
@@ -124,7 +124,7 @@ class CfgVehicles
 							0.5,
 							
 							{
-								"PDArp/data/pda_damage.rvmat"
+								"pdarp\data\pda_damage.rvmat"
 							}
 						},
 						
@@ -132,7 +132,7 @@ class CfgVehicles
 							0.30000001,
 							
 							{
-								"PDArp/data/pda_damage.rvmat"
+								"pdarp\data\pda_damage.rvmat"
 							}
 						},
 						
@@ -140,7 +140,7 @@ class CfgVehicles
 							0,
 							
 							{
-								"PDArp/data/pda_destruct.rvmat"
+								"pdarp\data\pda_destruct.rvmat"
 							}
 						}
 					};
@@ -158,12 +158,12 @@ class CfgSoundShaders
 		{
 			
 			{
-				"PDArp/data/pda_message",
+				"pdarp\data\pda_message",
 				1
 			},
 			
 			{
-				"PDArp/data/pda_message",
+				"pdarp\data\pda_message",
 				1
 			}
 		};
