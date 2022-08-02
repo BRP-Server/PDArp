@@ -56,60 +56,6 @@ class PluginPDArp extends PluginBase
         }
 	}
 	
-	void SaveOptionsConfig()
-	{
-		if (PDArpDebugMode) Print(PDArpModPreffix + "SaveOptionsConfig.");
-		JsonFileLoader<ref PluginPDArp_Options>.JsonSaveFile(m_configDir + optionsJsonFilename, m_options);
-	}
-	
-	void LoadOptionsConfig()
-	{
-		if (PDArpDebugMode) Print(PDArpModPreffix + "LoadOptionsConfig.");
-		JsonFileLoader<ref PluginPDArp_Options>.JsonLoadFile(m_configDir + optionsJsonFilename, m_options);
-	}
-	
-	void SaveContactsConfig()
-	{
-		if (PDArpDebugMode) Print(PDArpModPreffix + "SaveContactsConfig.");
-		JsonFileLoader<ref array<ref PluginPDArp_Conversation>>.JsonSaveFile(m_configDir + contactsJsonFilename, m_contacts);
-	}
-	
-	void LoadContactsConfig()
-	{
-		if (PDArpDebugMode) Print(PDArpModPreffix + "LoadContactsConfig.");
-		JsonFileLoader<ref array<ref PluginPDArp_Conversation>>.JsonLoadFile(m_configDir + contactsJsonFilename, m_contacts);
-	}
-	
-	void SaveCommentsConfig(string uid)
-	{
-		if (PDArpDebugMode) Print(PDArpModPreffix + "SaveCommentsConfig: " + uid);
-		
-		if (m_comments.Contains(uid))
-		{
-			ref array<ref PluginPDArp_Comment> comments = m_comments[uid];
-			
-			while (comments.Count() > 100)
-			{
-				comments.RemoveOrdered(0);
-			}
-			
-			JsonFileLoader<ref array<ref PluginPDArp_Comment>>.JsonSaveFile(m_configDir + uid + ".json", comments);
-		}
-	}
-	
-	void LoadCommentsConfig(string uid)
-	{
-		if (PDArpDebugMode) Print(PDArpModPreffix + "LoadCommentsConfig: " + uid);
-		
-		string fileName = m_configDir + uid + ".json";
-		if (FileExist(fileName))
-		{
-			ref array<ref PluginPDArp_Comment> result = new array<ref PluginPDArp_Comment>(); 
-			JsonFileLoader<ref array<ref PluginPDArp_Comment>>.JsonLoadFile(fileName, result);
-			m_comments[uid] = result;
-		}
-	}
-	
 	ref array<ref PluginPDArp_Comment> GetComments(string uid)
 	{
 		if (!m_comments.Contains(uid))

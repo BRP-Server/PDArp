@@ -3,7 +3,7 @@ class PDArpMenu extends UIScriptedMenu
 	bool m_active = false;
 	bool m_dirty = false;
 	
-    ref TextListboxWidget m_contactList;
+    ref TextListboxWidget m_chatRooms;
 	ref TextWidget m_yourIdText;
 	ref EditBoxWidget m_addContactTxt;
 	ref ButtonWidget m_addContactBtn;
@@ -47,7 +47,7 @@ class PDArpMenu extends UIScriptedMenu
 		if (PDArpDebugMode) Print(PDArpModPreffix + "PDArpMenu init");
 		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "PDArp/scripts/layouts/PDArpMenu.layout" );
 
-        m_contactList = TextListboxWidget.Cast( layoutRoot.FindAnyWidget( "contact_list" ) );
+        m_chatRooms = TextListboxWidget.Cast( layoutRoot.FindAnyWidget( "contact_list" ) );
 		m_yourIdText = TextWidget.Cast( layoutRoot.FindAnyWidget( "your_id_text" ) );
 		m_addContactTxt = EditBoxWidget.Cast( layoutRoot.FindAnyWidget( "add_contact_txt" ) );
 		m_addContactBtn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "add_contact_btn" ) );
@@ -60,21 +60,21 @@ class PDArpMenu extends UIScriptedMenu
 		m_hideId_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "hideid_btn" ) );
 		m_rename_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "rename_contact_btn" ) );
 		m_ban_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "ban_contact_btn" ) );
-		UpdateMutedButton();
-		UpdateHideIdButton();
+		// UpdateMutedButton();
+		// UpdateHideIdButton();
 				
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-				
-		ref array<string> request = new array<string>();
-		for (int i = 0; i < pluginPDArp.m_contacts.Count(); i++)
-		{
-			request.Insert(pluginPDArp.m_contacts[i].m_UID);
-		}
 		
 		if (!m_active) 
 		{
-			GetRPCManager().SendRPC( PDArpModPreffix, "CheckContacts", new Param1< ref array<string> >( request ), true );
+			Man man = GetGame().GetPlayer();
+			ref PlayerBase player = PlayerBase.Cast(man);
+			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
+			foreach(auto pda: pdas) {
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<int>( pda.GetID() ), true );
+			}
+
 			m_yourIdText.SetText("#pda_loading");
 			m_message.Enable(false);
 			m_send.Enable(false);
@@ -85,8 +85,7 @@ class PDArpMenu extends UIScriptedMenu
         return layoutRoot;
     }
 	
-	void FillContactsList()
-	{
+	void FillContactsList() {
 		if (PDArpDebugMode) Print(PDArpModPreffix + "FillContactsList");
 		
 		PluginPDArp pluginPDArp;
@@ -95,54 +94,50 @@ class PDArpMenu extends UIScriptedMenu
         int itemId;
         int rowShift = 0;
 		int selectedRow = m_lastSelectedContact;
-		m_contactList.ClearItems();
-			
-        if (pluginPDArp.m_enableGlobalChat)
-		{
-			rowShift = rowShift + 1;
-			itemId = m_contactList.AddItem("#pda_global_chat", NULL, 0);
-			m_contactList.SetItem(itemId, "" + pluginPDArp.m_globalChatUnreaded, NULL, 1);
-			m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.0, 0.529, 0.858));
-		}
-            
-		for (int i = 0; i < pluginPDArp.m_contacts.Count(); i++)
-		{
-			ref PluginPDArp_Conversation contact = pluginPDArp.m_contacts[i];
-			itemId = m_contactList.AddItem(contact.m_Name, NULL, 0);
-			m_contactList.SetItem(itemId, "" + contact.m_Unreaded, NULL, 1);
-			
-			if (contact.m_IsBanned)
-			{
-				m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.8, 0.02, 0.02));
+		m_chatRooms.ClearItems();
+
+		Man man = GetGame().GetPlayer();
+		ref PlayerBase player = PlayerBase.Cast(man);
+		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
+		auto pda = pdas.Get(0);
+		auto mem = pluginPDArp.m_devices.Get(pda.GetID());
+
+		ChatRoom chatRoom;
+		if (pda != null) {
+			foreach(auto chatRoomId: mem.chatroom_ids) {
+				chatRoom = pluginPDArp.m_rooms.Get(chatRoomId);
+				itemId = m_chatRooms.AddItem(chatRoom.name, NULL, 0);
+
+				// TODO: Not sure how I will deal with the unread stuff
+				// m_chatRooms.SetItem(itemId, "" + chatRoom.unreaded, NULL, 1);
+				
+				// TODO: Not sure how I will deal with the original ban & online users feature.
+				// if (contact.m_IsBanned) {
+				// 	m_chatRooms.SetItemColor(itemId, 0, ARGBF(1, 0.8, 0.02, 0.02));
+				// }
+				// else if (pluginPDArp.m_onlineContacts.Find(contact.m_UID) != -1)
+				// {
+				// 	m_chatRooms.SetItemColor(itemId, 0, ARGBF(1, 0.2, 0.8, 0.02));
+				// }
+				
+				m_chatRooms.SetItemColor(itemId, 0, ARGBF(1, 0.7, 0.7, 0.7));
+
 			}
-			else if (pluginPDArp.m_onlineContacts.Find(contact.m_UID) != -1)
-			{
-				m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.2, 0.8, 0.02));
-			}
-			else
-			{
-				m_contactList.SetItemColor(itemId, 0, ARGBF(1, 0.7, 0.7, 0.7));
-			}			
 		}
 		
-		if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
-		{
+		if (selectedRow >= 0 && selectedRow < mem.chatroom_ids.Count() + rowShift) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X1 " + selectedRow);
 			m_lastSelectedContact = selectedRow;
-			m_contactList.SelectRow(selectedRow);
+			m_chatRooms.SelectRow(selectedRow);
 			SelectConversation(selectedRow);
-		}
-		else if (pluginPDArp.m_contacts.Count() + rowShift > 0)
-		{
+		} else if (mem.chatroom_ids.Count() + rowShift > 0) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X2 " + 0);
 			m_lastSelectedContact = 0;
-			m_contactList.SelectRow(0);
+			m_chatRooms.SelectRow(0);
 			SelectConversation(0);
-		}
-		else
-		{
+		} else {
 			m_lastSelectedContact = -1;
-			m_contactList.SelectRow(-1);
+			m_chatRooms.SelectRow(-1);
 			SelectConversation(-1);
 		}
 	}
@@ -150,26 +145,20 @@ class PDArpMenu extends UIScriptedMenu
 	void SelectConversation(int id)
 	{
 		if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: " + id);
-		
+
 		int rowShift = 0;		
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		ref array<ref Param2<string, string>> confMessages = null;
 		
-		if (pluginPDArp.m_enableGlobalChat)
-		{
-			if (id == rowShift)
-			{
-				confMessages = pluginPDArp.m_globalMessages;
-				pluginPDArp.m_globalChatUnreaded = 0;
-				m_contactList.SetItem(id, "0", NULL, 1);
-			}
-			
-			rowShift = rowShift + 1;
-		}
+		// TODO: The PDA should be passed in or be a module attribute of the menu. (Probably the last one)
+		Man man = GetGame().GetPlayer();
+		ref PlayerBase player = PlayerBase.Cast(man);
+		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
+		auto pda = pdas.Get(0);
+		auto mem = pluginPDArp.m_devices.Get(pda.GetID());
 		
-		if ( (id < 0) || (id >= pluginPDArp.m_contacts.Count() + rowShift) )
-		{
+		if ( (id < 0) || (id >= mem.chatroom_ids.Count() + rowShift) ) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "No need to select conversation: " + id);
 			m_chat.ClearItems();
 			m_message.Enable(false);
@@ -197,6 +186,7 @@ class PDArpMenu extends UIScriptedMenu
 		int textWidthCalibration;
 		int textHeightCalibration; 
 		
+		// TODO: What are this confMessages?
 		if (confMessages)
 		{
 			for (i = 0; i < confMessages.Count(); i++)
@@ -245,22 +235,18 @@ class PDArpMenu extends UIScriptedMenu
 			m_send.Enable(true);
 			m_sendFuncEnabled = true;
 		}
-		else
-		{
-			ref PluginPDArp_Conversation contact = pluginPDArp.m_contacts[id - rowShift];		
-			ref array<ref PluginPDArp_Comment> comments = pluginPDArp.GetComments(contact.m_UID);
+		else{
+			string roomId = mem.chatroom_ids.Get(id - rowShift);
+			ref ChatRoom room = pluginPDArp.m_rooms.Get(roomId);
 
-			for (i = 0; i < comments.Count(); i++)
-			{
-				ref PluginPDArp_Comment comment = comments[i];	
-				if (comment.m_UID == GetGame().GetPlayer().GetIdentity().GetId())
-				{
+			foreach (auto message: room.messages) {
+				if (message.sender_id == pda.GetID()) {
 					autor = "Me";
 					color = ARGBF(1, 0.2, 0.8, 0.2);
 				}
-				else
-				{
-					autor = contact.m_Name;
+				else {
+					auto contact = mem.contacts.Get(message.sender_id);
+					autor = contact.name;
 					color = ARGBF(1, 0.976, 1, 0.298);
 				}
 							
@@ -268,7 +254,7 @@ class PDArpMenu extends UIScriptedMenu
 				m_chat.SetItemColor(itemId, 0, color);
 							
 				addedLinesCount = 0;
-				chatMessage = comment.m_Message;			
+				chatMessage = message.message;			
 				while (chatMessage.LengthUtf8() > 0)
 				{		
 					isLineFinished = false;
@@ -304,25 +290,27 @@ class PDArpMenu extends UIScriptedMenu
 			m_chat.SelectRow(chatLinesCount);
 			m_chat.EnsureVisible(chatLinesCount);
 			
-			if ( (pluginPDArp.m_onlineContacts.Find(contact.m_UID) == -1) || (contact.m_IsBanned) )
-			{
-				m_message.Enable(false);
-				m_send.Enable(false);
-				m_sendFuncEnabled = false;
-			}
-			else
-			{
-				m_message.Enable(true);
-				m_send.Enable(true);
-				m_sendFuncEnabled = true;
-			}
+			// TODO: more bits of the online functionality
+			// if ( (pluginPDArp.m_onlineContacts.Find(contact.m_UID) == -1) || (contact.m_IsBanned) )
+			// {
+			// 	m_message.Enable(false);
+			// 	m_send.Enable(false);
+			// 	m_sendFuncEnabled = false;
+			// }
+			// else
+			// {
+			m_message.Enable(true);
+			m_send.Enable(true);
+			m_sendFuncEnabled = true;
+			// }
 			
-			if (contact.m_Unreaded > 0)
-			{
-				contact.m_Unreaded = 0;
-				m_contactList.SetItem(id, "" + contact.m_Unreaded, NULL, 1);
-				pluginPDArp.SaveContactsConfig();
-			}
+			// TODO: More bits of the unread functionality
+			// if (contact.m_Unreaded > 0)
+			// {
+			// 	contact.m_Unreaded = 0;
+			// 	m_chatRooms.SetItem(id, "" + contact.m_Unreaded, NULL, 1);
+			// 	pluginPDArp.SaveContactsConfig();
+			// }
 		}
 	}
 	
@@ -350,9 +338,9 @@ class PDArpMenu extends UIScriptedMenu
 			m_sendMessageStatus = 0;
 		}
 		
-		if (m_lastSelectedContact != m_contactList.GetSelectedRow())
+		if (m_lastSelectedContact != m_chatRooms.GetSelectedRow())
 		{
-			m_lastSelectedContact = m_contactList.GetSelectedRow();
+			m_lastSelectedContact = m_chatRooms.GetSelectedRow();
 			SelectConversation(m_lastSelectedContact);
 		}
 		
@@ -382,7 +370,12 @@ class PDArpMenu extends UIScriptedMenu
 			
 			PluginPDArp pluginPDArp;
 			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			m_yourIdText.SetText("#pda_user_id " + pluginPDArp.m_steamId);		
+			Man man = GetGame().GetPlayer();
+			ref PlayerBase player = PlayerBase.Cast(man);
+			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
+			auto pda = pdas.Get(0);
+			auto mem = pluginPDArp.m_devices.Get(pda.GetID());
+			m_yourIdText.SetText("#pda_user_id " + pda.GetID());		
 			
 			FillContactsList();
 			m_dirty = false;
@@ -447,6 +440,12 @@ class PDArpMenu extends UIScriptedMenu
 	{
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+
+		Man man = GetGame().GetPlayer();
+		ref PlayerBase player = PlayerBase.Cast(man);
+		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
+		auto pda = pdas.Get(0);
+		auto mem = pluginPDArp.m_devices.Get(pda.GetID());
 		
 		if (m_sendFuncEnabled && m_sendMessageTimeout <= 0 && m_sendMessageStatus == 0)
 		{
@@ -460,30 +459,33 @@ class PDArpMenu extends UIScriptedMenu
 				}
 				
 				int rowShift = 0;
-				if (pluginPDArp.m_enableGlobalChat)
-				{
-					if (selectedRow == rowShift)
-					{
-						m_sendMessageTimeout = 1.0;
-						m_sendMessageStatus = 1;
-						GetRPCManager().SendRPC( PDArpModPreffix, "SendGlobalMessage", new Param1<string>( message ), true );
-						m_message.SetText("");	
-						return true;				
-					}
+				// TODO: More logic on global chat
+				// if (pluginPDArp.m_enableGlobalChat)
+				// {
+				// 	if (selectedRow == rowShift)
+				// 	{
+				// 		m_sendMessageTimeout = 1.0;
+				// 		m_sendMessageStatus = 1;
+				// 		GetRPCManager().SendRPC( PDArpModPreffix, "SendGlobalMessage", new Param1<string>( message ), true );
+				// 		m_message.SetText("");	
+				// 		return true;				
+				// 	}
 					
-					rowShift = rowShift + 1;
-				}
+				// 	rowShift = rowShift + 1;
+				// }
 				
-				ref PluginPDArp_Conversation msgContact = pluginPDArp.m_contacts[selectedRow - rowShift];
-				string target = msgContact.m_UID;					
-				if ( (pluginPDArp.m_onlineContacts.Find(target) != -1) && (!msgContact.m_IsBanned) )
-				{					
-					m_sendMessageTimeout = 0.25;
-					m_sendMessageStatus = 1;
-					GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param2<string, string>( target, message ), true );
-					m_message.SetText("");
-					return true;
-				}
+				// TODO: More logic on online and banned contacts
+				string roomId = mem.chatroom_ids.Get(selectedRow - rowShift);
+				// ref PluginPDArp_Conversation msgContact = pluginPDArp.m_contacts[selectedRow - rowShift];
+				// string target = msgContact.m_UID;					
+				// if ( (pluginPDArp.m_onlineContacts.Find(target) != -1) && (!msgContact.m_IsBanned) )
+				// {					
+				m_sendMessageTimeout = 0.25;
+				m_sendMessageStatus = 1;
+				GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<int, string, string>( pda.GetID(), roomId, message ), true );
+				m_message.SetText("");
+				return true;
+				// }
 			}
 		}
 		
@@ -521,128 +523,134 @@ class PDArpMenu extends UIScriptedMenu
 				return SendMessageEvent();
 			}
 			
-			if (w == m_deleteContactBtn)
-			{
-				selectedRow = m_lastSelectedContact;
-				rowShift = 0;
-				if (pluginPDArp.m_enableGlobalChat)
-				{				
-					if (selectedRow == rowShift)
-					{
-						return true;
-					}
+			// TODO Implement delete contact functionality
+			// if (w == m_deleteContactBtn)
+			// {
+			// 	selectedRow = m_lastSelectedContact;
+			// 	rowShift = 0;
+			// 	// TODO: More logic on global chat, probably non relevant for our implementation
+			// 	if (pluginPDArp.m_enableGlobalChat)
+			// 	{				
+			// 		if (selectedRow == rowShift)
+			// 		{
+			// 			return true;
+			// 		}
 					
-					rowShift = rowShift + 1;
-				}
+			// 		rowShift = rowShift + 1;
+			// 	}
 				
-				if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
-				{
-					string contactToDeleteUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
-					pluginPDArp.RemoveContact(contactToDeleteUid);
-					m_dirty = true;
-					return true;
-				}
-			}
+			// 	TODO: Implement delete contact button
+			// 	if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
+			// 	{
+			// 		string contactToDeleteUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
+			// 		pluginPDArp.RemoveContact(contactToDeleteUid);
+			// 		m_dirty = true;
+			// 		return true;
+			// 	}
+
+			// 	return true;
+			// }
 			
-			if (w == m_mute_btn)
-			{
-				pluginPDArp.m_options.m_Muted = !pluginPDArp.m_options.m_Muted;
-				UpdateMutedButton();
-				return true;
-			}
+			// TODO Implement mute functionality
+			// if (w == m_mute_btn) {
+			// 	pluginPDArp.m_options.m_Muted = !pluginPDArp.m_options.m_Muted;
+			// 	UpdateMutedButton();
+			// 	return true;
+			// }
 			
-			if (w == m_hideId_btn)
-			{
-				pluginPDArp.m_options.m_HideId = !pluginPDArp.m_options.m_HideId;
-				UpdateHideIdButton();
-				return true;
-			}
+			// TODO Implement hide id functionality (is this even needed?)
+			// if (w == m_hideId_btn) {
+			// 	pluginPDArp.m_options.m_HideId = !pluginPDArp.m_options.m_HideId;
+			// 	UpdateHideIdButton();
+			// 	return true;
+			// }
 			
-			if (w == m_rename_btn)
-			{
-				selectedRow = m_lastSelectedContact;
-				rowShift = 0;
-				if (pluginPDArp.m_enableGlobalChat)
-				{				
-					if (selectedRow == rowShift)
-					{
-						return true;
-					}
+			// TODO: Implement rename functionality.
+			// if (w == m_rename_btn) {
+			// 	selectedRow = m_lastSelectedContact;
+			// 	rowShift = 0;
+			// 	if (pluginPDArp.m_enableGlobalChat)
+			// 	{				
+			// 		if (selectedRow == rowShift)
+			// 		{
+			// 			return true;
+			// 		}
 					
-					rowShift = rowShift + 1;
-				}
+			// 		rowShift = rowShift + 1;
+			// 	}
 				
-				if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
-				{
-					string newContactName = m_addContactTxt.GetText();
-					if (newContactName.LengthUtf8() <= m_contactMaxLength && newContactName.LengthUtf8() > 0)
-					{
-						string contactToRenameUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
-						pluginPDArp.RenameContact(contactToRenameUid, newContactName);
-						m_dirty = true;
-						return true;
-					}
-				}
-			}
+			// 	if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
+			// 	{
+			// 		string newContactName = m_addContactTxt.GetText();
+			// 		if (newContactName.LengthUtf8() <= m_contactMaxLength && newContactName.LengthUtf8() > 0)
+			// 		{
+			// 			string contactToRenameUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
+			// 			pluginPDArp.RenameContact(contactToRenameUid, newContactName);
+			// 			m_dirty = true;
+			// 			return true;
+			// 		}
+			// 	}
+			// }
 			
-			if (w == m_ban_btn)
-			{
-				selectedRow = m_lastSelectedContact;
-				rowShift = 0;
-				if (pluginPDArp.m_enableGlobalChat)
-				{				
-					if (selectedRow == rowShift)
-					{
-						return true;
-					}
+			// TODO: Implement ban functionality
+			// if (w == m_ban_btn)
+			// {
+			// 	selectedRow = m_lastSelectedContact;
+			// 	rowShift = 0;
+			// 	if (pluginPDArp.m_enableGlobalChat)
+			// 	{				
+			// 		if (selectedRow == rowShift)
+			// 		{
+			// 			return true;
+			// 		}
 					
-					rowShift = rowShift + 1;
-				}
+			// 		rowShift = rowShift + 1;
+			// 	}
 				
-				if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
-				{
-					string contactToBanUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
-					pluginPDArp.BanUnbanContact(contactToBanUid);
-					m_dirty = true;
-					return true;
-				}
-			}
+			// 	if (selectedRow >= 0 && selectedRow < pluginPDArp.m_contacts.Count() + rowShift)
+			// 	{
+			// 		string contactToBanUid = pluginPDArp.m_contacts[selectedRow - rowShift].m_UID;
+			// 		pluginPDArp.BanUnbanContact(contactToBanUid);
+			// 		m_dirty = true;
+			// 		return true;
+			// 	}
+			// }
 		}
 		
 		return false;
 	}
 	
-	void UpdateMutedButton()
-	{
-		PluginPDArp pluginPDArp;
-		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+	// void UpdateMutedButton()
+	// {
+	// 	PluginPDArp pluginPDArp;
+	// 	Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
-		if (pluginPDArp.m_options.m_Muted)
-		{
-			m_mute_btn.SetText("#pda_unmute");
-		}
-		else
-		{
-			m_mute_btn.SetText("#pda_mute");
-		}
-	}
+	// 	if (pluginPDArp.m_options.m_Muted)
+	// 	{
+	// 		m_mute_btn.SetText("#pda_unmute");
+	// 	}
+	// 	else
+	// 	{
+	// 		m_mute_btn.SetText("#pda_mute");
+	// 	}
+	// }
 	
-	void UpdateHideIdButton()
-	{
-		PluginPDArp pluginPDArp;
-		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+	// void UpdateHideIdButton()
+	// {
+	// 	PluginPDArp pluginPDArp;
+	// 	Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		
-		if (pluginPDArp.m_options.m_HideId)
-		{
-			m_hideId_btn.SetText("#pda_unhideId");
-			m_yourIdText.Show(false);
-		}
-		else
-		{
-			m_hideId_btn.SetText("#pda_hideId");
-			m_yourIdText.Show(true);
-		}
-	}	
+	// 	if (pluginPDArp.m_options.m_HideId)
+	// 	{
+	// 		m_hideId_btn.SetText("#pda_unhideId");
+	// 		m_yourIdText.Show(false);
+	// 	}
+	// 	else
+	// 	{
+	// 		m_hideId_btn.SetText("#pda_hideId");
+	// 		m_yourIdText.Show(true);
+	// 	}
+	// }	
 
 	override bool OnChange(Widget w, int x, int y, bool finished) {
 		super.OnChange(w, x, y, finished);
@@ -673,7 +681,7 @@ class PDArpMenu extends UIScriptedMenu
 		
 		if (PDArpDebugMode) Print(PDArpModPreffix + "OnItemSelected: " + w.GetName());
 		
-		if (w == m_contactList)
+		if (w == m_chatRooms)
 		{
 			return true;
 		}

@@ -1,146 +1,286 @@
-class PluginLogicPDA extends PluginBase
+class PDArpContact {
+	int id;
+	string name;
+	
+	void PDArpContact(int _id, string _name) {
+		id = _id;
+		name = _name;
+	}
+}
+
+class ChatMessage {
+	int sender_id;
+	string message;
+	int time;
+
+	void ChatMessage(int deviceId, string txt) {
+		sender_id = deviceId;
+		message = txt;
+		//TODO: Get time now
+	}
+}
+
+class ChatRoom {
+	string id;
+	string name;
+	ref array<int> participant_device_ids;
+	ref array<ref ChatMessage> messages;
+	
+	void ChatRoom(string _id, string _name, array<int> _devices, array<ChatMessage> _messages) {
+		id = _id;
+		name = _name;
+		participant_device_ids = _devices;
+		if (participant_device_ids == null) {
+			participant_device_ids = new ref array<int>;
+		}
+		messages = new ref array<ref ChatMessage>;
+		if (_messages != null) {
+			foreach(ChatMessage m: _messages) {
+				messages.Insert(m);
+			}
+		}
+	}
+}
+
+class DeviceMemory {
+	int id;
+	ref map <int, ref PDArpContact> contacts;
+	ref array<string> chatroom_ids;
+}
+
+class PluginPDArp extends PluginBase
 {	
 	EffectSound effect;
-    
-    ref PluginPDArp_ServerOptions m_server_options;
+
+	static private const string DIR_PATH = "$profile:FuelControl";
+	static private const string SETTINGS_PATH = DIR_PATH + "\\settings.json";
+	static private const string DATA_DIR_PATH = DIR_PATH + "\\data";
+	static private const string DEVICES_PATH = DATA_DIR_PATH + "\\devices.json";
 	
-	void PluginLogicPDA()
+	ref PluginPDArpSettings m_settings;
+	ref map<int, ref DeviceMemory> m_devices;
+	ref map<string, ref ChatRoom> m_rooms;
+
+	ref PDArpMenu m_PDArpMenu;
+
+	void PluginPDArp()
 	{
         if (GetGame().IsServer())
         {
-            string serverOptionsPath = "$profile:\\PDArp_ServerOptions.json";
-            if (FileExist(serverOptionsPath))
-            {
-                JsonFileLoader<ref PluginPDArp_ServerOptions>.JsonLoadFile(serverOptionsPath, m_server_options);
+
+			if (!FileExist(DIR_PATH)){
+				MakeDirectory(DIR_PATH);
+			}
+
+			if (!FileExist(DATA_DIR_PATH)){
+				MakeDirectory(DATA_DIR_PATH);
+			}
+
+            if (FileExist(SETTINGS_PATH)) {
+                JsonFileLoader<ref PluginPDArpSettings>.JsonLoadFile(SETTINGS_PATH, m_settings);
+            } else {
+                m_settings = new PluginPDArpSettings;
+                JsonFileLoader<ref PluginPDArpSettings>.JsonSaveFile(SETTINGS_PATH, m_settings);
             }
-            else
-            {
-                m_server_options = new PluginPDArp_ServerOptions;
-                JsonFileLoader<ref PluginPDArp_ServerOptions>.JsonSaveFile(serverOptionsPath, m_server_options);
-            }
+
+			if (FileExist(DEVICES_PATH)) {
+				JsonFileLoader<ref map<int, ref DeviceMemory>>.JsonLoadFile(DEVICES_PATH, m_devices);
+			} else {
+				m_devices = new ref map<int, ref DeviceMemory>>;
+				JsonFileLoader<ref map<int, ref DeviceMemory>>.JsonSaveFile(DEVICES_PATH, m_devices);
+			}
+
+			// Load the chat rooms in memory
+			foreach(auto device: m_devices) {
+				foreach(auto room_id: device.chatroom_ids) {
+					string room_path = DATA_DIR_PATH + "\\room_" + room_id + ".json";
+					if (m_rooms.Get(room_id) && FileExist(room_path)) {
+						ref ChatRoom room;
+						JsonFileLoader<ref ChatRoom>.JsonLoadFile(room_path, room);
+						m_rooms.Insert(room_id, room);
+					} else {
+						m_rooms.Remove(room_id);
+					}
+				}
+			}
         }
+
+		if (GetGame().IsClient()) {
+			auto man = GetGame().GetPlayer();
+			ref PlayerBase player = PlayerBase.Cast(man);
+			auto pdas = GetWorkingPDAsOnPlayer(player);
+			foreach(auto pda: pdas) {
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<int>( pda.GetID() ), true );
+			}
+		}
         
-		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginLogicPDA construct.");
-	}
-	
-	void ~PluginLogicPDA()
-	{
-        if (m_server_options) delete m_server_options;
-        
-		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginLogicPDA destruct.");
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp construct.");
 	}
 	
 	override void OnInit()
 	{
-		GetRPCManager().AddRPC( PDArpModPreffix, "GetVisualUserId", this, SingleplayerExecutionType.Both ); 
 		GetRPCManager().AddRPC( PDArpModPreffix, "AddContact", this, SingleplayerExecutionType.Both ); 
-		GetRPCManager().AddRPC( PDArpModPreffix, "CheckContacts", this, SingleplayerExecutionType.Both ); 
 		GetRPCManager().AddRPC( PDArpModPreffix, "SendMessage", this, SingleplayerExecutionType.Both );
-        GetRPCManager().AddRPC( PDArpModPreffix, "SendGlobalMessage", this, SingleplayerExecutionType.Both );
-				
-		if (GetGame().IsClient())
-		{
-			GetRPCManager().SendRPC( PDArpModPreffix, "GetVisualUserId", new Param1<string>( "" ), true );
+		GetRPCManager().AddRPC( PDArpModPreffix, "GetDeviceMemory", this, SingleplayerExecutionType.Both );
+		GetRPCManager().AddRPC( PDArpModPreffix, "GetChatRoom", this, SingleplayerExecutionType.Both);
+	}
+	
+	void SaveRoom(string room_id) {
+		string room_path = DATA_DIR_PATH + "\\room_" + room_id + ".json";
+		auto room = m_rooms.Get(room_id);
+		if (room != null) {
+			JsonFileLoader<ref ChatRoom>.JsonSaveFile(room_path, room);
 		}
 	}
 	
-	void SendMessage( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
-    { 
-		if( type == CallType.Server )
-        {
-			Param2< string, string > serverData;			
-        	if ( !ctx.Read( serverData ) ) return;
+	void SaveDevices() {
+		JsonFileLoader<ref map<int, ref DeviceMemory>>.JsonSaveFile(DEVICES_PATH, m_devices);
+	}
+
+	void GetDeviceMemory( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		DeviceMemory mem;
+		if (GetGame().IsServer()) {
+			Param1< int > serverData;			
+			if ( !ctx.Read( serverData ) ) return;
+
+			mem = m_devices.Get(serverData.param1);
+			GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( mem ), true, sender );
+		}
+		
+		if (GetGame().IsClient()) {
+			Param1< DeviceMemory > clientData;
+			if ( !ctx.Read( clientData ) ) return;
 			
+			mem = clientData.param1;
+			m_devices.Set(mem.id, mem);
+			foreach(auto roomId: mem.chatroom_ids) {
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<string>( roomId ), true );
+			}
+		}
+	}
+	
+	void GetChatRoom( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		ChatRoom room;
+		if (GetGame().IsServer()) {
+			Param1< string > serverData;			
+			if ( !ctx.Read( serverData ) ) return;
+
+			room = m_rooms.Get(serverData.param1);
+			GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
+		}
+		
+		if (GetGame().IsClient()) {
+			Param1< ChatRoom > clientData;
+			if ( !ctx.Read( clientData ) ) return;
+			
+			room = clientData.param1;
+			
+			m_rooms.Set(room.id, room);
+		}
+	}
+
+	void SendMessage( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		int deviceId;
+		string roomId;
+		PlayerBase player;
+		ref array<ItemPDA> pdas;
+
+		if (GetGame().IsServer()) {
+			Param3< int, string, string > serverData;			
+			if ( !ctx.Read( serverData ) ) return;
+			
+			deviceId = serverData.param1;
+			roomId = serverData.param2;
+			string txt = serverData.param3;
+	
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SendMessage RPC called on server from " + sender);
-			
-			string senderId = sender.GetId();
-			string senderName = sender.GetName();
 			ref array<Man> players = new array<Man>();
 			GetGame().GetPlayers(players);
-			for (int q = 0; q < players.Count(); q++)
-			{
-				ref PlayerBase player = PlayerBase.Cast(players[q]);
-				if (player)
-				{
-					ref PlayerIdentity identity = player.GetIdentity();
-					string identityId = identity.GetId();
-					if (serverData.param1 == identityId)
-					{
-						if (HasWorkingPDA(player))
-						{
-							string identityName = identity.GetName();
-							if (PDArpDebugMode) Print(PDArpModPreffix + "Found target player 1; S: " + sender + "I: " + identity);
-							if (PDArpDebugMode) Print(PDArpModPreffix + "RPC data 1: " + identityId + " | " + identityName + " | " + senderId + " | " + serverData.param2);
-							
-							GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param4< string, string, string, string >( identityId, identityName, senderId, serverData.param2 ), true, sender );
-							
-							if (!(senderId == identityId))
-							{
-								if (PDArpDebugMode) Print(PDArpModPreffix + "RPC data 2: " + senderId + " | " + senderName + " | " + senderId + " | " + serverData.param2);
-								GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param4< string, string, string, string >( senderId, senderName, senderId, serverData.param2 ), true, identity );
+	
+			foreach(auto room: m_rooms) {
+				if (room.id == roomId) {
+					ref ChatMessage message = new ref ChatMessage(deviceId, txt);
+					room.messages.Insert(message);
+					foreach (auto man: players) {
+						player = PlayerBase.Cast(man);
+						pdas = GetWorkingPDAsOnPlayer(player);
+						foreach(auto pda: pdas) {
+							foreach (int participant: room.participant_device_ids) {
+								if (pda.GetID() == participant) {
+									GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<int, string, ChatMessage>( participant, roomId, message ), true, player.GetIdentity() );
+								}
 							}
-							
-							return;
 						}
 					}
+					SaveRoom(room.id);
+					break;
 				}
 			}
-			
-			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param4< string, string, string, string >( "", "", "", "" ), true, sender );
 		}
-		else
-		{
-			Param4< string, string, string, string > clientData;			
-        	if ( !ctx.Read( clientData ) ) return;
+
+		if (GetGame().IsClient()) {
+			Param3< int, string, ChatMessage > clientData;			
+			if ( !ctx.Read( serverData ) ) return;
 			
-			if (PDArpDebugMode) Print(PDArpModPreffix + "SendMessage RPC called on cleint from " + sender);
-			
-			string contactId = clientData.param1;
-			string contactName = clientData.param2;
-			string userSenderId = clientData.param3;
-			string message = clientData.param4;
-					
-			if (PDArpDebugMode) Print(PDArpModPreffix + "SendMessage received: " + contactId + " | " + contactName + " | " + userSenderId + " | " + message);
-			
-			PluginPDArp pluginPDArp;
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));			
-			if (pluginPDArp)
-			{
-				ref PluginPDArp_Conversation msgContact = pluginPDArp.FindContact(contactId);
-				if (msgContact == null)
-				{
-					pluginPDArp.AddContact(contactId, contactName);
-					msgContact = pluginPDArp.FindContact(contactId);
-				}
-				
-				if (!msgContact.m_IsBanned)
-				{
-					if (userSenderId == contactId && !pluginPDArp.m_options.m_Muted)
-					{	
-						GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
-					}
-					
-					pluginPDArp.AddComment(contactId, userSenderId, message);
+			deviceId = clientData.param1;
+			roomId = clientData.param2;
+			ChatMessage msg = clientData.param3;
+
+			auto gamePlayer = GetGame().GetPlayer();
+			player = PlayerBase.Cast(gamePlayer);
+
+			DeviceMemory mem;
+
+			pdas = GetWorkingPDAsOnPlayer(player);
+
+			// Maybe this is not needed. It just ensures the player has the pda in their inventory;
+			foreach(auto p: pdas) {
+				if(p.GetID() == deviceId) {
+					mem = m_devices.Get(deviceId);
+					break;
 				}
 			}
+
+			auto contact = mem.contacts.Get(deviceId);
+			
+			if (contact == null) {
+				mem.contacts.Set(deviceId, new ref PDArpContact(deviceId, "Unknown"));
+			}
+			
+			
+			GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
+			
+			ref ChatRoom chatroom = m_rooms.Get(roomId);
+			
+			if (chatroom == null) {
+				chatroom =  new ref ChatRoom(roomId, contact.name, null, null);
+				m_rooms.Insert(roomId, chatroom);
+			}
+			
+			chatroom.messages.Insert(msg);
+
 		}
 	}
-	
-	bool HasWorkingPDA(PlayerBase player)
-	{
-		array<EntityAI> itemsArray = new array<EntityAI>;		
+
+	// Players could have multiple PDAs on their inventory
+	ref array<ItemPDA> GetWorkingPDAsOnPlayer(PlayerBase player) {
+		array<EntityAI> itemsArray = new array<EntityAI>;
+		array<ItemPDA> pdas = new array<ItemPDA>;
+		ref ItemPDA item;		
+
 		player.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, itemsArray);
 		
 		ItemBase itemInHands = player.GetItemInHands();
-		if (itemInHands)
-		{
-			itemsArray.Insert(EntityAI.Cast(itemInHands));
+		if (itemInHands) {
+			// This is not very efficient, but must be done so the first element is the one in the hands.
+			// TODO: Does EnumerateInventory append to the array or substitutes items already on it?
+			//       If that is the case it would be more efficient to add this item first to the array.
+			itemsArray.InsertAt(itemInHands, 0);
 		}
 		
-		ItemPDA item;		
 		for (int i = 0; i < itemsArray.Count(); i++)
 		{
-			ItemPDA.CastTo(item, itemsArray.Get(i));
+			item = ItemPDA.Cast(itemsArray.Get(i));
 
 			if (!item)
 				continue;
@@ -154,194 +294,64 @@ class PluginLogicPDA extends PluginBase
 			if (!item.GetCompEM().CanWork())
 				continue;
 
-			return true;
+			pdas.Insert(item);
 		}
 		
-		return false;
+		return pdas;
 	}
 	
-	void CheckContacts( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
-    { 
-		if( type == CallType.Server )
-        {
-			Param1< array<string> > serverData;			
+	void AddContact( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {        
+        if( type == CallType.Server ) {
+			Param2< int, PDArpContact > serverData;
         	if ( !ctx.Read( serverData ) ) return;
 			
-			if (PDArpDebugMode) Print(PDArpModPreffix + "CheckContacts RPC called on server from " + sender);
+			int fromDevice = serverData.param1;
+			PDArpContact contact = serverData.param2;
 			
-			ref array<string> request = new array<string>();
-			request.Copy(serverData.param1);
+			auto mem = m_devices.Get(fromDevice);
 			
-			ref array<Man> players = new array<Man>();
-			GetGame().GetPlayers(players);
+			mem.contacts.Insert(contact.id, contact);
 			
-			ref array<string> result = new array<string>();
-			for (int i = 0; i < request.Count(); i++)
-			{
-				string uid = request[i];				
-				for (int q = 0; q < players.Count(); q++)
-				{
-					ref PlayerBase player = PlayerBase.Cast(players[q]);
-					if (player)
-					{
-						ref PlayerIdentity identity = player.GetIdentity();
-						string identityId = identity.GetId();
-						if (uid == identityId && HasWorkingPDA(player))
-						{
-							if (PDArpDebugMode) Print(PDArpModPreffix + "CheckContacts Player " + identity.GetName() + " is online.");
-							result.Insert(uid);
-						}
-					}
-				}
-			}
-			
-			GetRPCManager().SendRPC( PDArpModPreffix, "CheckContacts", new Param1< ref array<string> >( result ), true, sender );
-		}
-		else
-        {
-			Param1< array<string> > clientData;
-        	if ( !ctx.Read( clientData ) ) return;
-			
-			if (PDArpDebugMode) Print(PDArpModPreffix + "CheckContacts RPC called on client from " + sender);
-			
-			PluginPDArp pluginPDArp;
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			if (pluginPDArp)
-			{
-				pluginPDArp.m_onlineContacts.Clear();
-				pluginPDArp.m_onlineContacts.Copy(clientData.param1);
-				if (pluginPDArp.IsOpen())
-				{
-					pluginPDArp.m_PDArpMenu.m_dirty = true;
-				}
+			SaveDevices();
+        } else {
+			if (IsOpen()) {
+				m_PDArpMenu.m_addContactStatus = 2;
 			}
 		}
-	}
-	
-	void GetVisualUserId( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
-    {   
-		if( type == CallType.Server )
-        {
-			if (PDArpDebugMode) Print(PDArpModPreffix + "GetVisualUserId RPC called on server from " + sender);
-			string userVisualId = sender.GetPlainId();
-			GetRPCManager().SendRPC( PDArpModPreffix, "GetVisualUserId", new Param3<string, bool, bool>( userVisualId, m_server_options.m_enableGlobalChannel, m_server_options.m_enableGlobalChannelSound ), true, sender );
-		}
-		else
-        {
-			if (PDArpDebugMode) Print(PDArpModPreffix + "GetVisualUserId RPC called on client from " + sender);
-			
-			Param3<string, bool, bool> clientData;
-        	if ( !ctx.Read( clientData ) ) return;
-			
-			PluginPDArp pluginPDArp;
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			if (pluginPDArp)
-			{
-				pluginPDArp.m_steamId = clientData.param1;
-                pluginPDArp.m_enableGlobalChat = clientData.param2;
-                pluginPDArp.m_enableGlobalChatSound = clientData.param3;
-			}
-		}
-	}
-	
-	void AddContact( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
-    {        
-        if( type == CallType.Server )
-        {
-			Param1< string > serverData;
-        	if ( !ctx.Read( serverData ) ) return;
-			string requestName = serverData.param1;
-			
-            if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact RPC called on server from " + sender + " | " + requestName);
-			
-			ref array<Man> players = new array<Man>();
-			GetGame().GetPlayers(players);
-			for (int i = 0; i < players.Count(); i++)
-			{
-				PlayerBase player = PlayerBase.Cast(players[i]);
-				if (player)
-				{
-					PlayerIdentity identity = player.GetIdentity();
-					string contactPlainId = identity.GetPlainId();
-					string contactSteamId = identity.GetId();
-					string contactName = identity.GetName();
-					if ( (contactPlainId == requestName) || (contactName == requestName) ) 
-					{
-						if (PDArpDebugMode) Print(PDArpModPreffix + "Found identity: " + identity + " | " + contactPlainId + " | " + contactName);
-						if (!(sender.GetId() == contactSteamId) || PDArpDebugMode)
-						{
-							if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact player with id " + requestName + " found: " + contactSteamId + "; " + contactName);
-							GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, string>( contactSteamId, contactName ), true, sender );
-							return;
-						}
-					}
-				}
-			}
-			
-			if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact player with id " + requestName + " not found.");			
-			GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, string>( "", "" ), true, sender );
-        }
-        else
-        {
-			Param2< string, string > clientData;
-        	if ( !ctx.Read( clientData ) ) return;
-			
-			if (PDArpDebugMode) Print(PDArpModPreffix + "AddContact RPC called on client from " + sender + "; " + clientData.param1 + " " + clientData.param2);
-			
-			PluginPDArp pluginPDArp;
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			if (pluginPDArp && pluginPDArp.IsOpen())
-			{
-				pluginPDArp.AddContact(clientData.param1, clientData.param2);
-			}
-        }
     }
-    
-    void SendGlobalMessage( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target )
-	{
-		if( type == CallType.Client )
-		{
-			PluginPDArp pluginPDArp;
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));			
-			if (pluginPDArp && pluginPDArp.m_enableGlobalChat)
-			{
-				Param2< string, string > clientData;			
-        		if ( !ctx.Read( clientData ) ) return;
-				
-				pluginPDArp.m_globalMessages.Insert(clientData);
-                pluginPDArp.m_globalChatUnreaded = pluginPDArp.m_globalChatUnreaded + 1;
-				
-				PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
-				if (player && HasWorkingPDA(player))
-				{
-					if (!pluginPDArp.m_options.m_Muted && pluginPDArp.m_enableGlobalChatSound)
-					{	
-						GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
-					}
-					
-					if (pluginPDArp.IsOpen())
-					{
-						pluginPDArp.m_PDArpMenu.m_sendMessageStatus = 2;
-					}
-				}
-			}
-		}
-        else
-        {
-            Param1< string > serverData;			
-        	if ( !ctx.Read( serverData ) ) return;
-			
-			if (!sender) return;
-			
-			if (!m_server_options.m_enableGlobalChannel) return;
-			
-			GetRPCManager().SendRPC( PDArpModPreffix, "SendGlobalMessage", new Param2< string, string >( sender.GetName(), serverData.param1 ), true );	
-        }
+
+	bool IsOpen() {
+		return m_PDArpMenu && m_PDArpMenu.m_active;
 	}
+
+	void Open() {
+		if (IsOpen()) {
+			Close();
+		}
+		
+		if (GetGame().GetUIManager().GetMenu() != NULL) {
+			if (PDArpDebugMode) Print(PDArpModPreffix + "OpenRecipesBookAction ActionCondition blocking by external menu: " + GetGame().GetUIManager().GetMenu());
+			return;
+		}
+		
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp prepare open menu");
+		m_PDArpMenu = new PDArpMenu;
+		m_PDArpMenu.Init();
+		GetGame().GetUIManager().ShowScriptedMenu( m_PDArpMenu, NULL );
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp post open menu: " + m_PDArpMenu);
+	}
+
+	void Close() {
+		if (m_PDArpMenu) {
+			m_PDArpMenu.m_active = false;
+		}
+
+		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp close menu: " + m_PDArpMenu);
+	}
+
 };
 
-class PluginPDArp_ServerOptions
+class PluginPDArpSettings
 {
-    bool m_enableGlobalChannel = false;
-    bool m_enableGlobalChannelSound = false;
+
 };
