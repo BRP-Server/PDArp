@@ -177,6 +177,8 @@ class PluginPDArp extends PluginBase
 				m_devices.Insert(deviceId, mem);
 				mem.SaveToFile();
 			}
+			
+			m_devices.Insert(mem.id, mem);
 
 			foreach(auto roomPref: mem.chatRooms) {
 				string room_path = PDARP_DATA_DIR_PATH + "\\room_" + roomPref.id + ".json";
@@ -199,7 +201,13 @@ class PluginPDArp extends PluginBase
 
 			m_devices.Set(mem.id, mem);
 			foreach(auto roomPref1: mem.chatRooms) {
-				GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<string>( roomPref1.id ), true );
+				if (m_rooms.Get(roomPref1.id) == null) {
+					GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<string>( roomPref1.id ), true );
+				}
+			}
+
+			if(IsOpen()) {
+				m_PDArpMenu.m_dirty = true;
 			}
 		}
 	}
@@ -214,7 +222,7 @@ class PluginPDArp extends PluginBase
 			PDArpLog.Debug("Client " + sender.GetPlainId() + " requesting chat room " + serverData.param1);
 			GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
 		}
-		
+
 		if (GetGame().IsClient()) {
 			Param1< ChatRoom > clientData;
 			if ( !ctx.Read( clientData ) ) return;
@@ -222,12 +230,10 @@ class PluginPDArp extends PluginBase
 			room = clientData.param1;
 			PDArpLog.Trace("Received room " + room.id);
 
-			
 			m_rooms.Set(room.id, room);
 
 			if (IsOpen()) {
 				m_PDArpMenu.m_dirty = true;
-				m_PDArpMenu.m_addContactStatus == 2;
 			}
 		}
 	}
@@ -235,7 +241,6 @@ class PluginPDArp extends PluginBase
 	void SendMessage( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
 		string deviceId;
 		string roomId;
-		PlayerBase player;
 		ref array<ItemPDA> pdas;
 
 		if (GetGame().IsServer()) {
@@ -248,27 +253,21 @@ class PluginPDArp extends PluginBase
 	
 			PDArpLog.Trace("Client " + sender.GetPlainId() + " sending meessage from device " + deviceId + " to chat room " + roomId);
 
-			ref array<Man> players = new array<Man>();
-			GetGame().GetPlayers(players);
-	
-			foreach(auto room: m_rooms) {
-				if (room.id == roomId) {
-					ref ChatMessage message = new ref ChatMessage(deviceId, txt);
-					room.messages.Insert(message);
-					foreach (auto man: players) {
-						player = PlayerBase.Cast(man);
-						pdas = GetWorkingPDAsOnPlayer(player);
-						foreach(auto pda: pdas) {
-							foreach (string participant: room.deviceIds) {
-								if (pda.GetMemoryID() == participant) {
-									GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, player.GetIdentity() );
-								}
-							}
+			auto room = m_rooms.Get(roomId);
+			if (room != null) {
+				ref ChatMessage message = new ref ChatMessage(deviceId, txt);
+				room.messages.Insert(message);
+				foreach(auto participant: room.deviceIds) {
+					if (participant != deviceId) {
+						auto players = GetPlayersCloseToPDA(deviceId);
+						foreach(auto player: players) {
+							auto playerIdentity = player.GetIdentity();
+							PDArpLog.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
+							GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
 						}
 					}
-					SaveRoom(room.id);
-					break;
 				}
+				SaveRoom(room.id);			
 			}
 			
 		}
@@ -365,6 +364,27 @@ class PluginPDArp extends PluginBase
 		return pdas;
 	}
 	
+	ref array<PlayerBase> GetPlayersCloseToPDA(string pdaId) {
+		ref array<PlayerBase> players = new ref array<PlayerBase>;
+		ref array<Man> people;
+		GetGame().GetPlayers(people);
+		
+		foreach(auto p: people) {
+			ref PlayerBase player = PlayerBase.Cast(p);
+			auto pdas = GetWorkingPDAsOnPlayer(player);
+			auto c = players.Count();
+			foreach(auto pda: pdas) {
+				if(pda.GetMemoryID() == pdaId) {
+					players.Insert(player);
+					break;
+				}
+			}
+			// TODO: Check around the player for pdas.
+		}
+		
+		return players;
+	}
+	
 	void AddContact( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {        
         if( type == CallType.Server ) {
 			Param2< string, PDArpContact > serverData;
@@ -375,10 +395,13 @@ class PluginPDArp extends PluginBase
 			
 			PDArpLog.Debug("Client " + sender.GetPlainId() + " adding contact " + contact.id + " to device " + fromDevice);
 
-			auto mem = m_devices.Get(fromDevice);
-			mem.contacts.Insert(contact);
+			auto mem1 = m_devices.Get(fromDevice);
+			mem1.contacts.Insert(contact);
 
-			// TODO: BEtter way to create identifiers.
+			auto mem2 = m_devices.Get(contact.id);
+			mem2.contacts.Insert(new ref PDArpContact(fromDevice, "Unknown"));
+
+			// TODO: Better way to create identifiers.
 			CF_TextReader reader = new CF_TextReader(new CF_StringStream(fromDevice + contact.id));
 			CF_Base16Stream output = new CF_Base16Stream();
 			CF_SHA256.Process(reader, output);
@@ -391,11 +414,30 @@ class PluginPDArp extends PluginBase
 			ChatRoom room = new ChatRoom(roomId, roomId, devices, null);
 			m_rooms.Insert(roomId, room);
 
-			mem.SaveToFile();
-			GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( mem ), true, sender );
-			SaveRoom(roomId);
-			GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
+			auto preferences = new ref ChatPreferences(room.id, room.name, false);
+			mem1.chatRooms.Insert(preferences);
+			mem2.chatRooms.Insert(preferences);
 
+			mem1.SaveToFile();
+			mem2.SaveToFile();
+			SaveRoom(roomId);
+
+			// Update sender's pda
+			GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( mem1 ), true, sender );
+			GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
+			
+			// Update the added contact's pda
+			auto players = GetPlayersCloseToPDA(mem2.id);
+			foreach(auto p: players) {
+				auto pdas = GetWorkingPDAsOnPlayer(p);
+				foreach (auto pda: pdas) {
+					if (pda.GetMemoryID() == mem2.id) {
+						auto identity = p.GetIdentity();
+						GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( mem2 ), true, identity );
+						GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, identity );
+					}
+				}
+			}
         }
     }
 

@@ -71,17 +71,18 @@ class PDArpMenu extends UIScriptedMenu
 			Man man = GetGame().GetPlayer();
 			ref PlayerBase player = PlayerBase.Cast(man);
 			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
-			foreach(auto pda: pdas) {
+			auto pda = pdas.Get(0);
+			if (pda != null && pluginPDArp.m_devices.Get(pda.GetMemoryID()) == null) {
+				// Request PDA memory if not present in the client.
 				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<string>( pda.GetMemoryID() ), true );
 			}
-
 			m_yourIdText.SetText("#pda_loading");
 			m_message.Enable(false);
 			m_send.Enable(false);
 			m_sendFuncEnabled = false;
 		}
 		
-		m_active = true;		
+		m_active = true;
         return layoutRoot;
     }
 	
@@ -335,7 +336,7 @@ class PDArpMenu extends UIScriptedMenu
 		if (m_addContactStatus == 2)
 		{
 
-						if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
+			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
 			FillContactsList();
 			m_addContactStatus = 0;
 		}
@@ -513,6 +514,11 @@ class PDArpMenu extends UIScriptedMenu
 			PluginPDArp pluginPDArp;
 			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 			
+			Man man = GetGame().GetPlayer();
+			ref PlayerBase player = PlayerBase.Cast(man);
+			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
+			auto pda = pdas.Get(0);
+			
 			if (w == m_addContactBtn)
 			{
 				if (m_addContactTimeout <= 0 && m_addContactStatus == 0)
@@ -521,7 +527,8 @@ class PDArpMenu extends UIScriptedMenu
 					if (contactId.LengthUtf8() <= m_contactMaxLength && contactId.LengthUtf8() > 0) {
 						m_addContactStatus = 1;
 						m_addContactTimeout = 1;
-						GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param1<string>( contactId ), true );
+						auto contact = new PDArpContact(contactId, "Unknown");
+						GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, PDArpContact>( pda.GetMemoryID(), contact), true );
 						return true;
 					}	
 				}
