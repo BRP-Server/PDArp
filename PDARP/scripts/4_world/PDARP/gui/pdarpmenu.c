@@ -29,6 +29,8 @@ class PDArpMenu extends UIScriptedMenu
 	
 	bool m_externalSendEvent = false;
 	bool m_sendFuncEnabled = true;
+
+	string m_pdaId;
 	
 	void PDArpMenu()
 	{				
@@ -72,16 +74,17 @@ class PDArpMenu extends UIScriptedMenu
 			ref PlayerBase player = PlayerBase.Cast(man);
 			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
 			auto pda = pdas.Get(0);
-			if (pda != null && pluginPDArp.m_devices.Get(pda.GetMemoryID()) == null) {
+			m_pdaId = pda.GetMemoryID();
+			if (pda != null && pluginPDArp.m_devices.Get(m_pdaId) == null) {
 				// Request PDA memory if not present in the client.
-				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<string>( pda.GetMemoryID() ), true );
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<string>( m_pdaId ), true );
 			}
 			m_yourIdText.SetText("#pda_loading");
 			m_message.Enable(false);
 			m_send.Enable(false);
 			m_sendFuncEnabled = false;
 		}
-		
+		m_dirty = true;
 		m_active = true;
         return layoutRoot;
     }
@@ -97,14 +100,10 @@ class PDArpMenu extends UIScriptedMenu
 		int selectedRow = m_lastSelectedContact;
 		m_chatRooms.ClearItems();
 
-		Man man = GetGame().GetPlayer();
-		ref PlayerBase player = PlayerBase.Cast(man);
-		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
-		auto pda = pdas.Get(0);
-		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
+		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 
 		ChatRoom chatRoom;
-		if (pda != null) {
+		if (mem != null) {
 			foreach(auto chatRoomPref: mem.chatRooms) {
 				chatRoom = pluginPDArp.m_rooms.Get(chatRoomPref.id);
 				itemId = m_chatRooms.AddItem(chatRoom.name, NULL, 0);
@@ -143,8 +142,7 @@ class PDArpMenu extends UIScriptedMenu
 		}
 	}
 	
-	void SelectConversation(int id)
-	{
+	void SelectConversation(int id) {
 		if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: " + id);
 
 		int rowShift = 0;		
@@ -153,11 +151,7 @@ class PDArpMenu extends UIScriptedMenu
 		ref array<ref Param2<string, string>> confMessages = null;
 		
 		// TODO: The PDA should be passed in or be a module attribute of the menu. (Probably the last one)
-		Man man = GetGame().GetPlayer();
-		ref PlayerBase player = PlayerBase.Cast(man);
-		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
-		auto pda = pdas.Get(0);
-		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
+		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 		
 		if ( (id < 0) || (id >= mem.chatRooms.Count() + rowShift) ) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "No need to select conversation: " + id);
@@ -186,7 +180,7 @@ class PDArpMenu extends UIScriptedMenu
 		int q = 0;
 		int textWidthCalibration;
 		int textHeightCalibration; 
-		
+
 		// TODO: What are this confMessages?
 		if (confMessages)
 		{
@@ -241,7 +235,7 @@ class PDArpMenu extends UIScriptedMenu
 			ref ChatRoom room = pluginPDArp.m_rooms.Get(roomId);
 
 			foreach (auto message: room.messages) {
-				if (message.sender_id == pda.GetMemoryID()) {
+				if (message.sender_id == m_pdaId) {
 					autor = "Me";
 					color = ARGBF(1, 0.2, 0.8, 0.2);
 				}
@@ -327,72 +321,59 @@ class PDArpMenu extends UIScriptedMenu
 	{
 		super.Update(timeslice);
 
-		if (m_externalSendEvent)
-		{
+		if (m_externalSendEvent) {
 			SendMessageEvent();
 			m_externalSendEvent = false;
 		}
 		
-		if (m_addContactStatus == 2)
-		{
+		if (m_addContactStatus == 2) {
 
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
 			FillContactsList();
 			m_addContactStatus = 0;
 		}
 		
-		if (m_sendMessageStatus == 2)
-		{
+		if (m_sendMessageStatus == 2) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X3 " + m_lastSelectedContact);
 			FillContactsList();
 			m_sendMessageStatus = 0;
 		}
 		
-		if (m_lastSelectedContact != m_chatRooms.GetSelectedRow())
-		{
+		if (m_lastSelectedContact != m_chatRooms.GetSelectedRow()) {
 			m_lastSelectedContact = m_chatRooms.GetSelectedRow();
 			SelectConversation(m_lastSelectedContact);
 		}
 		
-		if (m_addContactTimeout > 0 || m_addContactStatus != 0)
-		{
+		if (m_addContactTimeout > 0 || m_addContactStatus != 0) {
 			m_addContactTimeout = m_addContactTimeout - timeslice;
 			m_addContactBtn.Enable(false);
-		}
-		else
-		{
+		} else {
 			m_addContactBtn.Enable(true);
 		}
 		
-		if (m_sendMessageTimeout > 0 || m_sendMessageStatus != 0)
-		{
+		if (m_sendMessageTimeout > 0 || m_sendMessageStatus != 0) {
 			m_sendMessageTimeout = m_sendMessageTimeout - timeslice;
 			m_send.Enable(false);
-		}
-		else
-		{
+		} else {
 			m_send.Enable(true);
 		}
 		
-		if (m_dirty)
-		{
+		if (m_dirty) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation by dirty: X6");
 			
 			PluginPDArp pluginPDArp;
 			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			Man man = GetGame().GetPlayer();
-			ref PlayerBase player = PlayerBase.Cast(man);
-			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
-			auto pda = pdas.Get(0);
-			auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
-			m_yourIdText.SetText("#pda_user_id " + pda.GetMemoryID());		
+
+			auto mem = pluginPDArp.m_devices.Get(m_pdaId);
+			m_yourIdText.SetText("#pda_user_id " + m_pdaId);		
 			
-			FillContactsList();
+			if (mem != null) {
+				FillContactsList();			
+			}
 			m_dirty = false;
 		}
 		
-		if (!m_active)
-		{
+		if (!m_active) {
 			GetGame().GetUIManager().Back();
 		}
 	}
@@ -514,28 +495,20 @@ class PDArpMenu extends UIScriptedMenu
 			PluginPDArp pluginPDArp;
 			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 			
-			Man man = GetGame().GetPlayer();
-			ref PlayerBase player = PlayerBase.Cast(man);
-			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
-			auto pda = pdas.Get(0);
-			
-			if (w == m_addContactBtn)
-			{
-				if (m_addContactTimeout <= 0 && m_addContactStatus == 0)
-				{
+			if (w == m_addContactBtn) {
+				if (m_addContactTimeout <= 0 && m_addContactStatus == 0) {
 					string contactId = m_addContactTxt.GetText();
 					if (contactId.LengthUtf8() <= m_contactMaxLength && contactId.LengthUtf8() > 0) {
 						m_addContactStatus = 1;
 						m_addContactTimeout = 1;
 						auto contact = new PDArpContact(contactId, "Unknown");
-						GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, PDArpContact>( pda.GetMemoryID(), contact), true );
+						GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, PDArpContact>( m_pdaId, contact), true );
 						return true;
 					}	
 				}
 			}
 			
-			if (w == m_send)
-			{
+			if (w == m_send) {
 				return SendMessageEvent();
 			}
 			
