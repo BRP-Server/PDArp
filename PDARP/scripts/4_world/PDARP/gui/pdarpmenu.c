@@ -72,7 +72,7 @@ class PDArpMenu extends UIScriptedMenu
 			ref PlayerBase player = PlayerBase.Cast(man);
 			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
 			foreach(auto pda: pdas) {
-				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<int>( pda.GetID() ), true );
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<string>( pda.GetMemoryID() ), true );
 			}
 
 			m_yourIdText.SetText("#pda_loading");
@@ -100,12 +100,12 @@ class PDArpMenu extends UIScriptedMenu
 		ref PlayerBase player = PlayerBase.Cast(man);
 		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
 		auto pda = pdas.Get(0);
-		auto mem = pluginPDArp.m_devices.Get(pda.GetID());
+		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
 
 		ChatRoom chatRoom;
 		if (pda != null) {
-			foreach(auto chatRoomId: mem.chatroom_ids) {
-				chatRoom = pluginPDArp.m_rooms.Get(chatRoomId);
+			foreach(auto chatRoomPref: mem.chatRooms) {
+				chatRoom = pluginPDArp.m_rooms.Get(chatRoomPref.id);
 				itemId = m_chatRooms.AddItem(chatRoom.name, NULL, 0);
 
 				// TODO: Not sure how I will deal with the unread stuff
@@ -125,12 +125,12 @@ class PDArpMenu extends UIScriptedMenu
 			}
 		}
 		
-		if (selectedRow >= 0 && selectedRow < mem.chatroom_ids.Count() + rowShift) {
+		if (selectedRow >= 0 && selectedRow < mem.chatRooms.Count() + rowShift) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X1 " + selectedRow);
 			m_lastSelectedContact = selectedRow;
 			m_chatRooms.SelectRow(selectedRow);
 			SelectConversation(selectedRow);
-		} else if (mem.chatroom_ids.Count() + rowShift > 0) {
+		} else if (mem.chatRooms.Count() + rowShift > 0) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X2 " + 0);
 			m_lastSelectedContact = 0;
 			m_chatRooms.SelectRow(0);
@@ -156,9 +156,9 @@ class PDArpMenu extends UIScriptedMenu
 		ref PlayerBase player = PlayerBase.Cast(man);
 		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
 		auto pda = pdas.Get(0);
-		auto mem = pluginPDArp.m_devices.Get(pda.GetID());
+		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
 		
-		if ( (id < 0) || (id >= mem.chatroom_ids.Count() + rowShift) ) {
+		if ( (id < 0) || (id >= mem.chatRooms.Count() + rowShift) ) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "No need to select conversation: " + id);
 			m_chat.ClearItems();
 			m_message.Enable(false);
@@ -236,16 +236,24 @@ class PDArpMenu extends UIScriptedMenu
 			m_sendFuncEnabled = true;
 		}
 		else{
-			string roomId = mem.chatroom_ids.Get(id - rowShift);
+			string roomId = mem.chatRooms.Get(id - rowShift).id;
 			ref ChatRoom room = pluginPDArp.m_rooms.Get(roomId);
 
 			foreach (auto message: room.messages) {
-				if (message.sender_id == pda.GetID()) {
+				if (message.sender_id == pda.GetMemoryID()) {
 					autor = "Me";
 					color = ARGBF(1, 0.2, 0.8, 0.2);
 				}
 				else {
-					auto contact = mem.contacts.Get(message.sender_id);
+					PDArpContact contact;
+					
+					foreach(auto c: mem.contacts) {
+						if (c.id == message.sender_id) {
+							contact = c;
+							break;
+						}
+					}
+					
 					autor = contact.name;
 					color = ARGBF(1, 0.976, 1, 0.298);
 				}
@@ -326,7 +334,8 @@ class PDArpMenu extends UIScriptedMenu
 		
 		if (m_addContactStatus == 2)
 		{
-			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
+
+						if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
 			FillContactsList();
 			m_addContactStatus = 0;
 		}
@@ -374,8 +383,8 @@ class PDArpMenu extends UIScriptedMenu
 			ref PlayerBase player = PlayerBase.Cast(man);
 			auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
 			auto pda = pdas.Get(0);
-			auto mem = pluginPDArp.m_devices.Get(pda.GetID());
-			m_yourIdText.SetText("#pda_user_id " + pda.GetID());		
+			auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
+			m_yourIdText.SetText("#pda_user_id " + pda.GetMemoryID());		
 			
 			FillContactsList();
 			m_dirty = false;
@@ -445,7 +454,7 @@ class PDArpMenu extends UIScriptedMenu
 		ref PlayerBase player = PlayerBase.Cast(man);
 		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
 		auto pda = pdas.Get(0);
-		auto mem = pluginPDArp.m_devices.Get(pda.GetID());
+		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
 		
 		if (m_sendFuncEnabled && m_sendMessageTimeout <= 0 && m_sendMessageStatus == 0)
 		{
@@ -475,14 +484,14 @@ class PDArpMenu extends UIScriptedMenu
 				// }
 				
 				// TODO: More logic on online and banned contacts
-				string roomId = mem.chatroom_ids.Get(selectedRow - rowShift);
+				string roomId = mem.chatRooms.Get(selectedRow - rowShift).id;
 				// ref PluginPDArp_Conversation msgContact = pluginPDArp.m_contacts[selectedRow - rowShift];
 				// string target = msgContact.m_UID;					
 				// if ( (pluginPDArp.m_onlineContacts.Find(target) != -1) && (!msgContact.m_IsBanned) )
 				// {					
 				m_sendMessageTimeout = 0.25;
 				m_sendMessageStatus = 1;
-				GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<int, string, string>( pda.GetID(), roomId, message ), true );
+				GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, string>( pda.GetMemoryID(), roomId, message ), true );
 				m_message.SetText("");
 				return true;
 				// }

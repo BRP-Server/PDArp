@@ -1,5 +1,42 @@
 class ItemPDA : ItemBase
-{	
+{
+	int b1 = 0;
+	int b2 = 0;
+	int b3 = 0;
+	int b4 = 0;
+
+	string memId = "";
+
+	void ItemPDA() {
+		RegisterNetSyncVariableInt("b1");
+		RegisterNetSyncVariableInt("b2");
+		RegisterNetSyncVariableInt("b3");
+		RegisterNetSyncVariableInt("b4");
+	}
+
+	string GetMemoryID() {
+		if (memId == "") {
+			string concatenated = b1.ToString() + b2.ToString() + b3.ToString() + b4.ToString();
+			CF_TextReader reader = new CF_TextReader(new CF_StringStream(concatenated));
+			CF_Base16Stream output = new CF_Base16Stream();
+			CF_SHA256.Process(reader, output);
+			memId = output.Encode().Substring(0, 8);
+			memId.ToLower();
+		}
+		return memId;
+	}
+	
+	override bool OnStoreLoad (ParamsReadContext ctx, int version) {
+		PDArpLog.Trace("OnStoreLoad version: " + version);
+		return super.OnStoreLoad(ctx, version);
+	}
+
+	override void AfterStoreLoad() {
+		GetPersistentID(b1, b2, b3, b4);
+		PDArpLog.Trace("AfterStoreLoad: " + GetMemoryID());
+		SetSynchDirty();
+	}
+
 	override void EEInit()
 	{
 		super.EEInit();

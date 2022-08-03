@@ -1,2 +1,2 @@
 const string PDArpModPreffix = "[PDArp] ";
-const bool PDArpDebugMode = false;
+const bool PDArpDebugMode = true;
