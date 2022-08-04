@@ -1,6 +1,7 @@
 private const string PDARP_DIR_PATH = "$profile:PDArp";
 private const string PDARP_SETTINGS_PATH = PDARP_DIR_PATH + "\\settings.json";
 private const string PDARP_DATA_DIR_PATH = PDARP_DIR_PATH + "\\data";
+private const string PDARP_STATE_PATH = PDARP_DATA_DIR_PATH + "\\state.json";
 
 class PDArpContact {
 	string id;
@@ -25,11 +26,13 @@ class ChatPreferences {
 }
 
 class ChatMessage {
+	int id;
 	string sender_id;
 	string message;
 	int time;
 
-	void ChatMessage(string deviceId, string txt) {
+	void ChatMessage(int _id, string deviceId, string txt) {
+		id = _id;
 		sender_id = deviceId;
 		message = txt;
 		//TODO: Get time now
@@ -55,6 +58,22 @@ class ChatRoom {
 				messages.Insert(m);
 			}
 		}
+	}
+
+	static ref ChatRoom LoadFromFile(string _id) {
+		string room_path = PDARP_DATA_DIR_PATH + "\\room_" + _id + ".json";
+		if (FileExist(room_path)) {
+			ref ChatRoom room;
+			JsonFileLoader<ref ChatRoom>.JsonLoadFile(room_path, room);
+			return room;
+		}
+		return null;
+	}
+
+	void SaveToFile() {
+		PDArpLog.Debug("Saving room " + id);
+		string roomPath = PDARP_DATA_DIR_PATH + "\\room_" + id + ".json";
+		JsonFileLoader<ref ChatRoom>.JsonSaveFile(roomPath, this);
 	}
 }
 
@@ -99,6 +118,20 @@ class DeviceMemory {
 	}
 }
 
+class PDArpState {
+	int lastId = 0;
+
+	static ref PDArpState LoadFromFile() {
+		ref PDArpState state;
+		JsonFileLoader<ref PDArpState>.JsonLoadFile(PDARP_STATE_PATH, state);
+		return state;
+	}
+
+	void SaveToFile() {
+		JsonFileLoader<ref PDArpState>.JsonSaveFile(PDARP_STATE_PATH, this);
+	}
+}
+
 class PluginPDArp extends PluginBase
 {	
 	EffectSound effect;
@@ -106,6 +139,7 @@ class PluginPDArp extends PluginBase
 	ref PluginPDArpSettings m_settings;
 	ref map<string, ref DeviceMemory> m_devices;
 	ref map<string, ref ChatRoom> m_rooms;
+	ref PDArpState m_state;
 
 	ref PDArpMenu m_PDArpMenu;
 
@@ -131,6 +165,13 @@ class PluginPDArp extends PluginBase
                 JsonFileLoader<ref PluginPDArpSettings>.JsonSaveFile(PDARP_SETTINGS_PATH, m_settings);
             }
 
+			if (FileExist(PDARP_STATE_PATH)) {
+                m_state = PDArpState.LoadFromFile();
+            } else {
+                m_state = new PDArpState();
+                m_state.SaveToFile();
+            }
+
         }
 
 		if (GetGame().IsClient()) {
@@ -147,14 +188,12 @@ class PluginPDArp extends PluginBase
 		GetRPCManager().AddRPC( PDArpModPreffix, "GetDeviceMemory", this, SingleplayerExecutionType.Both );
 		GetRPCManager().AddRPC( PDArpModPreffix, "GetChatRoom", this, SingleplayerExecutionType.Both);
 	}
-	
-	void SaveRoom(string roomId) {
-		PDArpLog.Debug("Saving room " + roomId);
-		string roomPath = PDARP_DATA_DIR_PATH + "\\room_" + roomId + ".json";
-		auto room = m_rooms.Get(roomId);
-		if (room != null) {
-			JsonFileLoader<ref ChatRoom>.JsonSaveFile(roomPath, room);
-		}
+
+	int GenerateMemoryIdentifier() {
+		int n = m_state.lastId + 1;
+		m_state.lastId = n;
+		m_state.SaveToFile();
+		return n;
 	}
 
 	void GetDeviceMemory( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
@@ -181,11 +220,9 @@ class PluginPDArp extends PluginBase
 			m_devices.Insert(mem.id, mem);
 
 			foreach(auto roomPref: mem.chatRooms) {
-				string room_path = PDARP_DATA_DIR_PATH + "\\room_" + roomPref.id + ".json";
-				if (!m_rooms.Get(roomPref.id) && FileExist(room_path)) {
-					ref ChatRoom room;
-					JsonFileLoader<ref ChatRoom>.JsonLoadFile(room_path, room);
-					m_rooms.Insert(roomPref.id, room);
+				if (m_rooms.Get(roomPref.id) == null) {
+					ChatRoom room = ChatRoom.LoadFromFile(roomPref.id);
+					m_rooms.Insert(room.id, room);
 				}
 			}
 
@@ -255,26 +292,24 @@ class PluginPDArp extends PluginBase
 
 			auto room = m_rooms.Get(roomId);
 			if (room != null) {
-				ref ChatMessage message = new ref ChatMessage(deviceId, txt);
+				ref ChatMessage message = new ref ChatMessage(room.messages.Count(), deviceId, txt);
 				room.messages.Insert(message);
 				foreach(auto participant: room.deviceIds) {
-					if (participant != deviceId) {
-						auto players = GetPlayersCloseToPDA(deviceId);
-						foreach(auto player: players) {
-							auto playerIdentity = player.GetIdentity();
-							PDArpLog.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
-							GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
-						}
+					auto players = GetPlayersCloseToPDA(deviceId);
+					foreach(auto player: players) {
+						auto playerIdentity = player.GetIdentity();
+						PDArpLog.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
+						GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
 					}
 				}
-				SaveRoom(room.id);			
+				room.SaveToFile();		
 			}
 			
 		}
 
 		if (GetGame().IsClient()) {
 			Param3<string, string, ChatMessage > clientData;			
-			if ( !ctx.Read( serverData ) ) return;
+			if ( !ctx.Read( clientData ) ) return;
 			
 			deviceId = clientData.param1;
 			roomId = clientData.param2;
@@ -288,18 +323,8 @@ class PluginPDArp extends PluginBase
 
 			DeviceMemory mem;
 
-			pdas = GetWorkingPDAsOnPlayer(player);
-
-			// Maybe this is not needed. It just ensures the player has the pda in their inventory;
-			foreach(auto p: pdas) {
-				if(p.GetMemoryID() == deviceId) {
-					mem = m_devices.Get(deviceId);
-					break;
-				}
-			}
-
 			PDArpContact contact;
-			
+
 			foreach(auto c: mem.contacts) {
 				if (c.id == deviceId) {
 					contact = c;
@@ -307,22 +332,18 @@ class PluginPDArp extends PluginBase
 				}
 			}
 			
-			if (contact == null) {
-				mem.contacts.Insert(new ref PDArpContact(deviceId, "Unknown"));
-				// TODO: Send request to server to add new contact to device.
+			if (!IsOpen()) {
+				GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
 			}
-			
-			
-			GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
 			
 			ref ChatRoom chatroom = m_rooms.Get(roomId);
-			
-			if (chatroom == null) {
-				chatroom =  new ref ChatRoom(roomId, contact.name, null, null);
-				m_rooms.Insert(roomId, chatroom);
+			if (chatroom.messages.Count() == msg.id) {
+				chatroom.messages.Insert(msg);
 			}
-			
-			chatroom.messages.Insert(msg);
+
+			if (IsOpen()) {
+				m_PDArpMenu.m_dirty = true;
+			}
 		}
 	}
 
@@ -372,7 +393,6 @@ class PluginPDArp extends PluginBase
 		foreach(auto p: people) {
 			ref PlayerBase player = PlayerBase.Cast(p);
 			auto pdas = GetWorkingPDAsOnPlayer(player);
-			auto c = players.Count();
 			foreach(auto pda: pdas) {
 				if(pda.GetMemoryID() == pdaId) {
 					players.Insert(player);
@@ -393,15 +413,18 @@ class PluginPDArp extends PluginBase
 			string fromDevice = serverData.param1;
 			PDArpContact contact = serverData.param2;
 			
+			auto mem1 = m_devices.Get(fromDevice);
+			auto mem2 = m_devices.Get(contact.id);
+
+			// TODO: Show error in UI
+			if (mem1 == null || mem2 == null) return;
+
 			PDArpLog.Debug("Client " + sender.GetPlainId() + " adding contact " + contact.id + " to device " + fromDevice);
 
-			auto mem1 = m_devices.Get(fromDevice);
 			mem1.contacts.Insert(contact);
-
-			auto mem2 = m_devices.Get(contact.id);
 			mem2.contacts.Insert(new ref PDArpContact(fromDevice, "Unknown"));
 
-			// TODO: Better way to create identifiers.
+			// TODO: Better way to create room identifiers.
 			CF_TextReader reader = new CF_TextReader(new CF_StringStream(fromDevice + contact.id));
 			CF_Base16Stream output = new CF_Base16Stream();
 			CF_SHA256.Process(reader, output);
@@ -420,7 +443,7 @@ class PluginPDArp extends PluginBase
 
 			mem1.SaveToFile();
 			mem2.SaveToFile();
-			SaveRoom(roomId);
+			room.SaveToFile();
 
 			// Update sender's pda
 			GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( mem1 ), true, sender );

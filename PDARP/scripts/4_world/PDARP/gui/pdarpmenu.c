@@ -19,12 +19,7 @@ class PDArpMenu extends UIScriptedMenu
 	
 	const int m_contactMaxLength = 32;
 	const int m_messageMaxLength = 256;
-	
-	float m_addContactTimeout = 0;
-	bool m_addContactStatus = 0;
-	
-	float m_sendMessageTimeout = 0;
-	bool m_sendMessageStatus = 0;
+		
 	int m_lastSelectedContact = -1;
 	
 	bool m_externalSendEvent = false;
@@ -326,36 +321,9 @@ class PDArpMenu extends UIScriptedMenu
 			m_externalSendEvent = false;
 		}
 		
-		if (m_addContactStatus == 2) {
-
-			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X5");
-			FillContactsList();
-			m_addContactStatus = 0;
-		}
-		
-		if (m_sendMessageStatus == 2) {
-			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X3 " + m_lastSelectedContact);
-			FillContactsList();
-			m_sendMessageStatus = 0;
-		}
-		
 		if (m_lastSelectedContact != m_chatRooms.GetSelectedRow()) {
 			m_lastSelectedContact = m_chatRooms.GetSelectedRow();
 			SelectConversation(m_lastSelectedContact);
-		}
-		
-		if (m_addContactTimeout > 0 || m_addContactStatus != 0) {
-			m_addContactTimeout = m_addContactTimeout - timeslice;
-			m_addContactBtn.Enable(false);
-		} else {
-			m_addContactBtn.Enable(true);
-		}
-		
-		if (m_sendMessageTimeout > 0 || m_sendMessageStatus != 0) {
-			m_sendMessageTimeout = m_sendMessageTimeout - timeslice;
-			m_send.Enable(false);
-		} else {
-			m_send.Enable(true);
 		}
 		
 		if (m_dirty) {
@@ -438,7 +406,7 @@ class PDArpMenu extends UIScriptedMenu
 		auto pda = pdas.Get(0);
 		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
 		
-		if (m_sendFuncEnabled && m_sendMessageTimeout <= 0 && m_sendMessageStatus == 0)
+		if (m_sendFuncEnabled)
 		{
 			int selectedRow = m_lastSelectedContact;
 			string message = m_message.GetText();
@@ -471,8 +439,6 @@ class PDArpMenu extends UIScriptedMenu
 				// string target = msgContact.m_UID;					
 				// if ( (pluginPDArp.m_onlineContacts.Find(target) != -1) && (!msgContact.m_IsBanned) )
 				// {					
-				m_sendMessageTimeout = 0.25;
-				m_sendMessageStatus = 1;
 				GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, string>( pda.GetMemoryID(), roomId, message ), true );
 				m_message.SetText("");
 				return true;
@@ -496,16 +462,12 @@ class PDArpMenu extends UIScriptedMenu
 			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 			
 			if (w == m_addContactBtn) {
-				if (m_addContactTimeout <= 0 && m_addContactStatus == 0) {
-					string contactId = m_addContactTxt.GetText();
-					if (contactId.LengthUtf8() <= m_contactMaxLength && contactId.LengthUtf8() > 0) {
-						m_addContactStatus = 1;
-						m_addContactTimeout = 1;
-						auto contact = new PDArpContact(contactId, "Unknown");
-						GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, PDArpContact>( m_pdaId, contact), true );
-						return true;
-					}	
-				}
+				string contactId = m_addContactTxt.GetText();
+				if (contactId.LengthUtf8() <= m_contactMaxLength && contactId.LengthUtf8() > 0) {
+					auto contact = new PDArpContact(contactId, "Unknown");
+					GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, PDArpContact>( m_pdaId, contact), true );
+					return true;
+				}	
 			}
 			
 			if (w == m_send) {

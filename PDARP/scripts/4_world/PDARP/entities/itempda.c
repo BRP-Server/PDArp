@@ -1,39 +1,53 @@
 class ItemPDA : ItemBase
 {
-	int b1 = 0;
-	int b2 = 0;
-	int b3 = 0;
-	int b4 = 0;
-
-	string memId = "";
+	int memId = 0;
+	string hashedMemId = "";
 
 	void ItemPDA() {
-		RegisterNetSyncVariableInt("b1");
-		RegisterNetSyncVariableInt("b2");
-		RegisterNetSyncVariableInt("b3");
-		RegisterNetSyncVariableInt("b4");
+		RegisterNetSyncVariableInt("memId");
+		if (GetGame().IsServer()) {
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(GenerateMemoryIdentifier, 500);
+		}
+	}
+
+	private void GenerateMemoryIdentifier() {
+		if (memId == 0) {
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			memId = pluginPDArp.GenerateMemoryIdentifier();
+			hashedMemId = "";
+			GetMemoryID();
+			SetSynchDirty();
+		}
 	}
 
 	string GetMemoryID() {
-		if (memId == "") {
-			string concatenated = b1.ToString() + b2.ToString() + b3.ToString() + b4.ToString();
-			CF_TextReader reader = new CF_TextReader(new CF_StringStream(concatenated));
+		if (hashedMemId == "") {
+			CF_TextReader reader = new CF_TextReader(new CF_StringStream(memId.ToString()));
 			CF_Base16Stream output = new CF_Base16Stream();
 			CF_SHA256.Process(reader, output);
-			memId = output.Encode().Substring(0, 8);
-			memId.ToLower();
+			hashedMemId = output.Encode().Substring(0, 8);
+			hashedMemId.ToLower();
 		}
-		return memId;
+		return hashedMemId;
+	}
+
+	override void OnStoreSave( ParamsWriteContext ctx ) {
+		super.OnStoreSave(ctx);
+		ctx.Write(memId);
 	}
 	
-	override bool OnStoreLoad (ParamsReadContext ctx, int version) {
-		PDArpLog.Trace("OnStoreLoad version: " + version);
-		return super.OnStoreLoad(ctx, version);
+	override bool OnStoreLoad(ParamsReadContext ctx, int version) {
+		auto loaded = super.OnStoreLoad(ctx, version);
+		if (loaded) {
+			ctx.Read(memId);
+			PDArpLog.Trace("OnStoreLoad version: " + version);
+			return true;
+		}
+		return loaded;
 	}
 
 	override void AfterStoreLoad() {
-		GetPersistentID(b1, b2, b3, b4);
-		PDArpLog.Trace("AfterStoreLoad: " + GetMemoryID());
 		SetSynchDirty();
 	}
 
@@ -106,6 +120,8 @@ class ItemPDA : ItemBase
 		super.OnVariablesSynchronized();
 		
 		if (PDArpDebugMode) Print(PDArpModPreffix + "OnVariablesSynchronized.");
+		hashedMemId = "";
+		GetMemoryID();
 		UpdateVisualStyle();
 	}
 	
