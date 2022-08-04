@@ -3,20 +3,6 @@ class PDArpMenu extends UIScriptedMenu
 	bool m_active = false;
 	bool m_dirty = false;
 	
-    ref TextListboxWidget m_chatRooms;
-	ref TextWidget m_yourIdText;
-	ref EditBoxWidget m_addContactTxt;
-	ref ButtonWidget m_addContactBtn;
-	ref ButtonWidget m_deleteContactBtn;
-	ref TextListboxWidget m_chat;
-	ref EditBoxWidget m_message;
-	ref ButtonWidget m_send;
-	ref TextWidget m_callibrationText;
-	ref ButtonWidget m_mute_btn;
-	ref ButtonWidget m_hideId_btn;
-	ref ButtonWidget m_rename_btn;
-	ref ButtonWidget m_ban_btn;
-	
 	const int m_contactMaxLength = 32;
 	const int m_messageMaxLength = 256;
 		
@@ -26,7 +12,30 @@ class PDArpMenu extends UIScriptedMenu
 	bool m_sendFuncEnabled = true;
 
 	string m_pdaId;
+
+	// Top bar
+	ref TextWidget m_yourIdTxt;
 	
+	// Room panel
+	ref PanelWidget m_chatRoomPanel;
+	ref TextListboxWidget m_chatRoomList;
+	ref ButtonWidget m_newRoomBtn;
+
+	// Add contact panel
+	ref PanelWidget m_addContactPanel;
+	ref ButtonWidget m_addContactBtn;
+	ref ButtonWidget m_cancelAddContactBtn;
+	ref EditBoxWidget m_addContactNameInput;
+	ref EditBoxWidget m_addContactIdInput;
+
+	// Chat panel
+	ref TextWidget m_roomNameTxt;
+	ref EditBoxWidget m_sendMsgInput;
+	ref ButtonWidget m_sendMsgBtn;
+	ref TextListboxWidget m_messagesList;
+	ref 
+
+
 	void PDArpMenu()
 	{				
 		if (PDArpDebugMode) Print(PDArpModPreffix + "PDArpMenu construct");
@@ -44,19 +53,31 @@ class PDArpMenu extends UIScriptedMenu
 		if (PDArpDebugMode) Print(PDArpModPreffix + "PDArpMenu init");
 		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "PDArp/scripts/layouts/PDArpMenu.layout" );
 
-        m_chatRooms = TextListboxWidget.Cast( layoutRoot.FindAnyWidget( "contact_list" ) );
-		m_yourIdText = TextWidget.Cast( layoutRoot.FindAnyWidget( "your_id_text" ) );
-		m_addContactTxt = EditBoxWidget.Cast( layoutRoot.FindAnyWidget( "add_contact_txt" ) );
-		m_addContactBtn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "add_contact_btn" ) );
-		m_deleteContactBtn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "delete_contact_btn" ) );
-		m_chat = TextListboxWidget.Cast( layoutRoot.FindAnyWidget( "messages_txt" ) );
-		m_message = EditBoxWidget.Cast( layoutRoot.FindAnyWidget( "send_msg_txt" ) );
-		m_send = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "semd_msg_btn" ) );
-		m_callibrationText = TextWidget.Cast( layoutRoot.FindAnyWidget( "callibration_txt" ) );
-		m_mute_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "mute_btn" ) );
-		m_hideId_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "hideid_btn" ) );
-		m_rename_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "rename_contact_btn" ) );
-		m_ban_btn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "ban_contact_btn" ) );
+		// Top bar
+		m_yourIdTxt = TextWidget.Cast( layoutRoot.FindAnyWidget( "your_id_txt" ) );
+
+		// Room panel
+		m_chatRoomPanel = PanelWidget.Cast(layoutRoot.FindAnyWidget("chatroom_panel"));
+        m_chatRoomList = TextListboxWidget.Cast( layoutRoot.FindAnyWidget( "chatroom_list" ) );
+		m_newRoomBtn = ButtonWidget.Cast( layoutRoot.FindAnyWidget( "new_room_btn" ) );
+
+		// Add contact panel
+		m_addContactPanel = PanelWidget.Cast(layoutRoot.FindAnyWidget("add_contact_panel"));
+		m_addContactBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("add_contact_btn"));
+		m_cancelAddContactBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("cancel_add_contact_btn"));
+		m_addContactNameInput = EditBoxWidget.Cast(layoutRoot.FindAnyWidget("add_contact_name_input"));
+		m_addContactIdInput = EditBoxWidget.Cast(layout.FindAnyWidget("add_contact_id_input"));
+
+		// Chat panel
+		m_roomNameTxt = TextWidget.Cast(layout.FindAnyWidget("room_name_txt"));
+		m_renameRoomBtn = ButtonWidget.Cast(layout.FindAnyWidget("rename_room_btn"));
+		m_addParticipantBtn = ButtonWidget.Cast(layout.FindAnyWidget("add_participant_btn"));
+		m_mutRoomBtn = ButtonWidget.Cast(layout.FindAnyWidget("mute_room_btn"));
+		
+		m_messagesList = TextListboxWidget.Cast( layoutRoot.FindAnyWidget("messages_list"));
+		m_sendMsgInput = EditBoxWidget.Cast(layout.FindAnyWidget("send_msg_input"));
+		m_sendMsgBtn = ButtonWidget.Cast(layout.FindAnyWidget("send_msg_btn"));
+
 		// UpdateMutedButton();
 		// UpdateHideIdButton();
 				
@@ -74,7 +95,7 @@ class PDArpMenu extends UIScriptedMenu
 				// Request PDA memory if not present in the client.
 				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<string>( m_pdaId ), true );
 			}
-			m_yourIdText.SetText("#pda_loading");
+			m_yourIdTxt.SetText("#pda_loading");
 			m_message.Enable(false);
 			m_send.Enable(false);
 			m_sendFuncEnabled = false;
@@ -93,7 +114,7 @@ class PDArpMenu extends UIScriptedMenu
         int itemId;
         int rowShift = 0;
 		int selectedRow = m_lastSelectedContact;
-		m_chatRooms.ClearItems();
+		m_chatRoomList.ClearItems();
 
 		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 
@@ -101,21 +122,21 @@ class PDArpMenu extends UIScriptedMenu
 		if (mem != null) {
 			foreach(auto chatRoomPref: mem.chatRooms) {
 				chatRoom = pluginPDArp.m_rooms.Get(chatRoomPref.id);
-				itemId = m_chatRooms.AddItem(chatRoom.name, NULL, 0);
+				itemId = m_chatRoomList.AddItem(chatRoom.name, NULL, 0);
 
 				// TODO: Not sure how I will deal with the unread stuff
-				// m_chatRooms.SetItem(itemId, "" + chatRoom.unreaded, NULL, 1);
+				// m_chatRoomList.SetItem(itemId, "" + chatRoom.unreaded, NULL, 1);
 				
 				// TODO: Not sure how I will deal with the original ban & online users feature.
 				// if (contact.m_IsBanned) {
-				// 	m_chatRooms.SetItemColor(itemId, 0, ARGBF(1, 0.8, 0.02, 0.02));
+				// 	m_chatRoomList.SetItemColor(itemId, 0, ARGBF(1, 0.8, 0.02, 0.02));
 				// }
 				// else if (pluginPDArp.m_onlineContacts.Find(contact.m_UID) != -1)
 				// {
-				// 	m_chatRooms.SetItemColor(itemId, 0, ARGBF(1, 0.2, 0.8, 0.02));
+				// 	m_chatRoomList.SetItemColor(itemId, 0, ARGBF(1, 0.2, 0.8, 0.02));
 				// }
 				
-				m_chatRooms.SetItemColor(itemId, 0, ARGBF(1, 0.7, 0.7, 0.7));
+				m_chatRoomList.SetItemColor(itemId, 0, ARGBF(1, 0.7, 0.7, 0.7));
 
 			}
 		}
@@ -123,16 +144,16 @@ class PDArpMenu extends UIScriptedMenu
 		if (selectedRow >= 0 && selectedRow < mem.chatRooms.Count() + rowShift) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X1 " + selectedRow);
 			m_lastSelectedContact = selectedRow;
-			m_chatRooms.SelectRow(selectedRow);
+			m_chatRoomList.SelectRow(selectedRow);
 			SelectConversation(selectedRow);
 		} else if (mem.chatRooms.Count() + rowShift > 0) {
 			if (PDArpDebugMode) Print(PDArpModPreffix + "SelectConversation: X2 " + 0);
 			m_lastSelectedContact = 0;
-			m_chatRooms.SelectRow(0);
+			m_chatRoomList.SelectRow(0);
 			SelectConversation(0);
 		} else {
 			m_lastSelectedContact = -1;
-			m_chatRooms.SelectRow(-1);
+			m_chatRoomList.SelectRow(-1);
 			SelectConversation(-1);
 		}
 	}
@@ -306,7 +327,7 @@ class PDArpMenu extends UIScriptedMenu
 			// if (contact.m_Unreaded > 0)
 			// {
 			// 	contact.m_Unreaded = 0;
-			// 	m_chatRooms.SetItem(id, "" + contact.m_Unreaded, NULL, 1);
+			// 	m_chatRoomList.SetItem(id, "" + contact.m_Unreaded, NULL, 1);
 			// 	pluginPDArp.SaveContactsConfig();
 			// }
 		}
@@ -321,8 +342,8 @@ class PDArpMenu extends UIScriptedMenu
 			m_externalSendEvent = false;
 		}
 		
-		if (m_lastSelectedContact != m_chatRooms.GetSelectedRow()) {
-			m_lastSelectedContact = m_chatRooms.GetSelectedRow();
+		if (m_lastSelectedContact != m_chatRoomList.GetSelectedRow()) {
+			m_lastSelectedContact = m_chatRoomList.GetSelectedRow();
 			SelectConversation(m_lastSelectedContact);
 		}
 		
@@ -333,7 +354,7 @@ class PDArpMenu extends UIScriptedMenu
 			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 
 			auto mem = pluginPDArp.m_devices.Get(m_pdaId);
-			m_yourIdText.SetText("#pda_user_id " + m_pdaId);		
+			m_yourIdTxt.SetText("#pda_user_id " + m_pdaId);		
 			
 			if (mem != null) {
 				FillContactsList();			
@@ -594,12 +615,12 @@ class PDArpMenu extends UIScriptedMenu
 	// 	if (pluginPDArp.m_options.m_HideId)
 	// 	{
 	// 		m_hideId_btn.SetText("#pda_unhideId");
-	// 		m_yourIdText.Show(false);
+	// 		m_yourIdTxt.Show(false);
 	// 	}
 	// 	else
 	// 	{
 	// 		m_hideId_btn.SetText("#pda_hideId");
-	// 		m_yourIdText.Show(true);
+	// 		m_yourIdTxt.Show(true);
 	// 	}
 	// }	
 
@@ -632,7 +653,7 @@ class PDArpMenu extends UIScriptedMenu
 		
 		if (PDArpDebugMode) Print(PDArpModPreffix + "OnItemSelected: " + w.GetName());
 		
-		if (w == m_chatRooms)
+		if (w == m_chatRoomList)
 		{
 			return true;
 		}

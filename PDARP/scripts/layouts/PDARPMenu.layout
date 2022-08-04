@@ -1,5 +1,5 @@
 FrameWidgetClass PDArpMenu {
- visible 0
+ visible 1
  color 0 0 0 0
  position 0 0
  size 1200 800
@@ -48,160 +48,203 @@ FrameWidgetClass PDArpMenu {
     }
    }
   }
-  TextListboxWidgetClass contact_list {
-   position 20 70
-   size 300 480
-   halign left_ref
-   valign top_ref
+  PanelWidgetClass chats_panel {
+   visible 1
+   color 0 0 0 0
+   position 0 50.2877
+   size 1 0.93857
    hexactpos 1
    vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   "title visible" 1
-   colums "#pda_contact_list;90;   ;10;"
-   lines 1
-   "highlight row" 1
-   font "gui/fonts/metronlight16"
-  }
-  EditBoxWidgetClass add_contact_txt {
-   color 0.9176 0.0314 0.0314 1
-   position 20 730
-   size 300 48
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style DefaultBorder
-   text "  #pda_hint1"
-   "Use default text" 1
-   "exact text" 1
-   font "gui/fonts/Metron14"
-  }
-  ButtonWidgetClass add_contact_btn {
-   color 1 0 0 1
-   position 20 680
-   size 300 40
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "#pda_add_contact"
-   font "gui/fonts/metronlight16"
-  }
-  TextListboxWidgetClass messages_txt {
-   ignorepointer 0
-   position 340 70
-   size 840 640
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   "title visible" 1
-   colums "#pda_sender;15;#pda_message;85;"
-   lines 1
-   "highlight row" 1
-   font "gui/fonts/metronlight16"
-  }
-  EditBoxWidgetClass send_msg_txt {
-   color 0.9176 0.0314 0.0314 1
-   position 340 730
-   size 700 48
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style DefaultBorder
-   text "  #pda_hint2"
-   "limit visible" 0
-   "Use default text" 1
-   "exact text" 1
-   font "gui/fonts/Metron14"
-  }
-  ButtonWidgetClass semd_msg_btn {
-   color 1 0 0 1
-   position 1060 730
-   size 120 48
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "#pda_send"
-   font "gui/fonts/metronlight16"
-  }
-  ButtonWidgetClass delete_contact_btn {
-   color 1 0 0 1
-   position 20 640
-   size 300 40
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "#pda_remove_contact"
-   font "gui/fonts/metronlight16"
-  }
-  TextWidgetClass callibration_txt {
-   ignorepointer 1
-   position 0 -9000
-   size 5000 48
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   font "gui/fonts/metronlight16"
-  }
-  ButtonWidgetClass mute_btn {
-   color 1 0 0 1
-   position 5 5
-   size 120 40
-   halign right_ref
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "Mute"
-   font "gui/fonts/metronlight16"
-  }
-  ButtonWidgetClass rename_contact_btn {
-   color 1 0 0 1
-   position 20 600
-   size 300 40
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "#pda_rename_contact"
-   font "gui/fonts/metronlight16"
-  }
-  ButtonWidgetClass ban_contact_btn {
-   color 1 0 0 1
-   position 20 560
-   size 300 40
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "#pda_ban_contact"
-   font "gui/fonts/metronlight16"
-  }
-  ButtonWidgetClass hideid_btn {
-   color 1 0 0 1
-   position 125 5
-   size 120 40
-   halign right_ref
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   style Default
-   text "Hide ID"
-   font "gui/fonts/metronlight16"
+   hexactsize 0
+   vexactsize 0
+   style rover_sim_colorable
+   {
+    EditBoxWidgetClass send_msg_txt {
+     color 0.9176 0.0314 0.0314 1
+     position 340 680
+     size 700 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     style DefaultBorder
+     text "    Write a message"
+     "limit visible" 0
+     "Use default text" 1
+     "exact text" 1
+     font "gui/fonts/Metron14"
+    }
+    PanelWidgetClass chatroom_panel {
+     visible 1
+     ignorepointer 1
+     position 20 20
+     size 301.724 706.31201
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     {
+      TextListboxWidgetClass chatroom_list {
+       visible 1
+       clipchildren 1
+       position 0 50
+       size 300 658
+       halign left_ref
+       valign top_ref
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       style Default
+       "title visible" 1
+       colums "Chat rooms;90;   ;10;"
+       lines 1
+       "highlight row" 1
+       font "gui/fonts/metronlight16"
+      }
+      ButtonWidgetClass new_btn {
+       position 0 0
+       size 90.2874 48
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       text "New"
+       font "gui/fonts/metronlight16"
+      }
+     }
+    }
+    PanelWidgetClass add_contact_panel {
+     visible 0
+     ignorepointer 1
+     position 20 20
+     size 300.58099 705.16895
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     {
+      ButtonWidgetClass add_contact_btn {
+       position -1.14291 -213.15601
+       size 1 48
+       valign center_ref
+       hexactpos 1
+       vexactpos 1
+       hexactsize 0
+       vexactsize 1
+       text "Add"
+       font "gui/fonts/metronlight16"
+      }
+      ButtonWidgetClass cancel_add_contact_btn {
+       position -1.14291 -156.578
+       size 1 48
+       valign center_ref
+       hexactpos 1
+       vexactpos 1
+       hexactsize 0
+       vexactsize 1
+       text "Cancel"
+       font "gui/fonts/metronlight16"
+      }
+      EditBoxWidgetClass add_contact_name_input {
+       position 0 58
+       size 298.29602 48
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       text "Contact name"
+       "Use default text" 1
+       "exact text" 1
+       font "gui/fonts/metronlight16"
+      }
+      EditBoxWidgetClass add_contact_id_input {
+       position 0 0
+       size 298.29602 48
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       text "Contact identifier"
+       "Use default text" 1
+       "exact text" 1
+       font "gui/fonts/metronlight16"
+      }
+     }
+    }
+    TextListboxWidgetClass messages_txt {
+     ignorepointer 0
+     position 340 70
+     size 840 595.42706
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     "title visible" 1
+     colums "#pda_sender;15;#pda_message;85;"
+     lines 1
+     "highlight row" 1
+     font "gui/fonts/metronlight16"
+    }
+    ButtonWidgetClass semd_msg_btn {
+     color 1 0 0 1
+     position 1060 680
+     size 120 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     style Default
+     text "#pda_send"
+     font "gui/fonts/metronlight16"
+    }
+    ButtonWidgetClass mute_room_btn {
+     position 1047.32019 15
+     size 130 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     "no focus" 0
+     text "Mute"
+     font "gui/fonts/metronlight16"
+    }
+    TextWidgetClass room_name_txt {
+     ignorepointer 1
+     position 340.707 19.8943
+     size 318.86697 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     style Normal
+     text "Room name"
+     font "gui/fonts/metronlight16"
+     "text offset" 0 15
+    }
+    ButtonWidgetClass add_participant_btn {
+     position 905.60498 15
+     size 130 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     "no focus" 0
+     text "Add participant"
+     font "gui/fonts/metronlight16"
+    }
+    ButtonWidgetClass rename_room_btn {
+     position 760.45599 15
+     size 130 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     "no focus" 0
+     text "Rename"
+     font "gui/fonts/metronlight16"
+    }
+   }
   }
  }
 }
