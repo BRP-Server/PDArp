@@ -120,26 +120,16 @@ FrameWidgetClass PDArpMenu {
      hexactsize 1
      vexactsize 1
      {
-      ButtonWidgetClass add_contact_btn {
-       position -1.14291 -213.15601
-       size 1 48
-       valign center_ref
+      EditBoxWidgetClass add_contact_id_input {
+       position 0 0
+       size 298.29602 48
        hexactpos 1
        vexactpos 1
-       hexactsize 0
+       hexactsize 1
        vexactsize 1
-       text "Add"
-       font "gui/fonts/metronlight16"
-      }
-      ButtonWidgetClass cancel_add_contact_btn {
-       position -1.14291 -156.578
-       size 1 48
-       valign center_ref
-       hexactpos 1
-       vexactpos 1
-       hexactsize 0
-       vexactsize 1
-       text "Cancel"
+       text "    Contact identifier"
+       "Use default text" 1
+       "exact text" 1
        font "gui/fonts/metronlight16"
       }
       EditBoxWidgetClass add_contact_name_input {
@@ -154,16 +144,26 @@ FrameWidgetClass PDArpMenu {
        "exact text" 1
        font "gui/fonts/metronlight16"
       }
-      EditBoxWidgetClass add_contact_id_input {
-       position 0 0
-       size 298.29602 48
+      ButtonWidgetClass add_contact_submit_btn {
+       position -1.14291 -213.15601
+       size 1 48
+       valign center_ref
        hexactpos 1
        vexactpos 1
-       hexactsize 1
+       hexactsize 0
        vexactsize 1
-       text "    Contact identifier"
-       "Use default text" 1
-       "exact text" 1
+       text "Add"
+       font "gui/fonts/metronlight16"
+      }
+      ButtonWidgetClass add_contact_cancel_btn {
+       position -1.14291 -156.578
+       size 1 48
+       valign center_ref
+       hexactpos 1
+       vexactpos 1
+       hexactsize 0
+       vexactsize 1
+       text "Cancel"
        font "gui/fonts/metronlight16"
       }
      }

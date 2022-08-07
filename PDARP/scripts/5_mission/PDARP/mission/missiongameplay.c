@@ -10,19 +10,15 @@ modded class MissionGameplay
 		super.OnKeyRelease(key);
 		
 		PluginPDArp pluginPDArp;
-		if ( key == KeyCode.KC_ESCAPE )
-		{	
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			if (pluginPDArp && pluginPDArp.IsOpen())
-			{
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+
+		if ( key == KeyCode.KC_ESCAPE ) {	
+			if (pluginPDArp && pluginPDArp.IsOpen()) {
 				pluginPDArp.Close();
 			}
 		}
-		else if ( key == KeyCode.KC_RETURN )
-		{
-			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-			if (pluginPDArp && pluginPDArp.IsOpen())
-			{
+		else if ( key == KeyCode.KC_RETURN ) {
+			if (pluginPDArp && pluginPDArp.IsOpen()) {
 				pluginPDArp.m_PDArpMenu.m_externalSendEvent = true;
 			}
 		}

@@ -39,9 +39,15 @@ class ChatMessage {
 	}
 }
 
+enum RoomType {
+	DirectMessage = 0,
+	Group = 1
+}
+
 class ChatRoom {
 	string id;
 	string name;
+	RoomType type;
 	ref array<string> deviceIds;
 	ref array<ref ChatMessage> messages;
 	
@@ -115,6 +121,15 @@ class DeviceMemory {
 		JsonFileLoader<ref array<ref ChatPreferences>>.JsonSaveFile(deviceChatRoomsPath, chatRooms);
 
 		PDArpLog.Debug("Saved device to file" + id);
+	}
+
+	PDArpContact GetContact(string _id) {
+		foreach (auto contact: contacts) {
+			if(contact.id == _id) {
+				return contact;
+			}
+		}
+		return null;
 	}
 }
 
@@ -448,7 +463,8 @@ class PluginPDArp extends PluginBase
 			// Update sender's pda
 			GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( mem1 ), true, sender );
 			GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
-			
+			GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", null, true, sender );
+
 			// Update the added contact's pda
 			auto players = GetPlayersCloseToPDA(mem2.id);
 			foreach(auto p: players) {
@@ -461,7 +477,9 @@ class PluginPDArp extends PluginBase
 					}
 				}
 			}
-        }
+        } else {
+			m_PDArpMenu.ResetView();
+		}
     }
 
 	bool IsOpen() {
