@@ -210,6 +210,7 @@ class PluginPDArp extends PluginBase
 		GetRPCManager().AddRPC( PDArpModPreffix, "GetDeviceMemory", this, SingleplayerExecutionType.Both );
 		GetRPCManager().AddRPC( PDArpModPreffix, "GetChatRoom", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "MsgAck", this, SingleplayerExecutionType.Both);
+		GetRPCManager().AddRPC( PDArpModPreffix, "RenameChat", this, SingleplayerExecutionType.Both);
 	}
 
 	int GenerateMemoryIdentifier() {
@@ -309,6 +310,42 @@ class PluginPDArp extends PluginBase
 				m_PDArpMenu.m_dirty = true;
 			}
 		}
+	}
+
+	void RenameChat(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		string deviceId;
+		string roomId;
+
+		if (GetGame().IsServer()) {
+			Param3<string, string, string > serverData;			
+			if ( !ctx.Read( serverData ) ) return;
+			deviceId = serverData.param1;
+			roomId = serverData.param2;
+			string newName = serverData.param3;
+
+			auto device = m_devices.Get(deviceId);
+			auto roomPrefs = device.GetChatPreferences(roomId);
+			auto room = m_rooms.Get(roomId);
+			if (room.type == RoomType.DirectMessage) { // Direct messages changes the name of the contact.
+				string contactId;
+				foreach(auto _id: room.deviceIds) {
+					if (_id != deviceId) {
+						contactId = _id;
+						break;
+					}
+				}
+				auto contact = device.GetContact(contactId);
+				contact.name = newName;
+				device.SaveToFile();
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetDeviceMemory", new Param1<DeviceMemory>( device ), true, sender );
+			} else { // If its a group the name changes for everyone
+				room.name = newName;
+				room.SaveToFile();
+				GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
+			}
+		}
+
+
 	}
 
 	void SendMessage( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {

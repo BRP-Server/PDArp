@@ -6,6 +6,7 @@ class PDArpMenu extends UIScriptedMenu
 	const int m_contactMaxLength = 32;
 	const int m_messageMaxLength = 256;
 	int m_lastSelectedChatIdx = -1;
+	bool m_isRenaming = false;
 
 	bool m_externalSendEvent = false;
 
@@ -31,6 +32,7 @@ class PDArpMenu extends UIScriptedMenu
 	ref TextWidget m_roomNameTxt;
 	ref ButtonWidget m_renameRoomBtn;
 	ref ButtonWidget m_muteRoomBtn;
+	ref EditBoxWidget m_renameRoomInput;
 
 	ref TextListboxWidget m_messagesList;
 	ref EditBoxWidget m_sendMsgInput;
@@ -76,6 +78,7 @@ class PDArpMenu extends UIScriptedMenu
 		m_renameRoomBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("rename_room_btn"));
 		// m_addParticipantBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("add_participant_btn"));
 		m_muteRoomBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("mute_room_btn"));
+		m_renameRoomInput = EditBoxWidget.Cast(layoutRoot.FindAnyWidget("rename_room_input"));
 
 		m_messagesList = TextListboxWidget.Cast( layoutRoot.FindAnyWidget("messages_list"));
 		m_sendMsgInput = EditBoxWidget.Cast(layoutRoot.FindAnyWidget("send_msg_input"));
@@ -246,7 +249,11 @@ class PDArpMenu extends UIScriptedMenu
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 
 		if (m_externalSendEvent) {
-			SendMessageEvent();
+			if (m_renameRoomInput.IsVisibleHierarchy()) {
+				SendRenameEvent();
+			} else if (m_sendMsgInput.IsVisibleHierarchy()) {
+				SendMessageEvent();
+			}
 			m_externalSendEvent = false;
 		}
 
@@ -346,11 +353,7 @@ class PDArpMenu extends UIScriptedMenu
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 
-		Man man = GetGame().GetPlayer();
-		ref PlayerBase player = PlayerBase.Cast(man);
-		auto pdas = pluginPDArp.GetWorkingPDAsOnPlayer(player);
-		auto pda = pdas.Get(0);
-		auto mem = pluginPDArp.m_devices.Get(pda.GetMemoryID());
+		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 		
 		string message = m_sendMsgInput.GetText();
 		if (message.LengthUtf8() > 0) {
@@ -361,12 +364,31 @@ class PDArpMenu extends UIScriptedMenu
 			if (roomPrefs.unread > 0) {
 				roomPrefs.unread = 0;
 			}
-			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, string>( pda.GetMemoryID(), roomPrefs.id, message ), true );
+			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, string>( m_pdaId, roomPrefs.id, message ), true );
 			m_sendMsgInput.SetText("");
 			return true;
 		}
 		
 		return false;
+	}
+	
+	bool SendRenameEvent() {
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
+		string newName = m_renameRoomInput.GetText();
+		
+		newName = newName.Trim();
+		
+		if (newName.LengthUtf8() > 0) {
+			ChatPreferences roomPrefs = mem.chatRooms.Get(m_lastSelectedChatIdx);
+			GetRPCManager().SendRPC(PDArpModPreffix, "RenameChat", new Param3<string, string, string>(m_pdaId, roomPrefs.id, newName));
+			CloseRenameInput();
+			return true;
+		} else {
+			ShowError("A name must not be empty");
+			return false;
+		}
 	}
 	
 	void ResetTitleText() {
@@ -442,6 +464,16 @@ class PDArpMenu extends UIScriptedMenu
 				ResetView();
 				return true;
 			}
+
+			if (w == m_renameRoomBtn) {
+				m_isRenaming = !m_isRenaming;
+				if (m_isRenaming) {
+					OpenRenameInput();
+				} else {
+					CloseRenameInput();
+				}
+				return true;
+			}
 			
 			if (w == m_newContactBtn) {
 				OpenAddContact();
@@ -455,6 +487,18 @@ class PDArpMenu extends UIScriptedMenu
 		}
 		
 		return false;
+	}
+	
+	void OpenRenameInput() {
+		m_renameRoomBtn.SetText("Cancel");
+		m_roomNameTxt.Show(false, true);
+		m_renameRoomInput.Show(true, true);
+	}
+	
+	void CloseRenameInput() {
+		m_renameRoomBtn.SetText("Rename");
+		m_renameRoomInput.Show(false, false);
+		m_roomNameTxt.Show(true, true);
 	}
 	
 	void OpenAddContact() {
@@ -484,6 +528,10 @@ class PDArpMenu extends UIScriptedMenu
 		}
 
 		if (w.GetName() == m_addContactNameInput.GetName()) {
+			return true;
+		}
+		
+		if (w.GetName() == m_renameRoomInput.GetName()) {
 			return true;
 		}
 

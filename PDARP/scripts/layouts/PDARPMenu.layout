@@ -226,6 +226,7 @@ FrameWidgetClass PDArpMenu {
      vexactsize 1
      {
       TextWidgetClass room_name_txt {
+       visible 1
        ignorepointer 1
        position 0 0
        size 318.86697 48
@@ -311,6 +312,21 @@ FrameWidgetClass PDArpMenu {
        vexactsize 1
        style Default
        text "#pda_send"
+       font "gui/fonts/metronlight16"
+      }
+      EditBoxWidgetClass rename_room_input {
+       visible 0
+       color 0.9176 0.0314 0.0314 1
+       position 0 0
+       size 318.86798 48
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       style DefaultBorder
+       text "    Name"
+       "Use default text" 1
+       "exact text" 1
        font "gui/fonts/metronlight16"
       }
      }
