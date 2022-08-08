@@ -247,6 +247,7 @@ class PDArpMenu extends UIScriptedMenu
 		super.Update(timeslice);
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+		ChatPreferences lastSelectedChat;
 
 		if (m_externalSendEvent) {
 			if (m_renameRoomInput.IsVisibleHierarchy()) {
@@ -257,15 +258,15 @@ class PDArpMenu extends UIScriptedMenu
 			m_externalSendEvent = false;
 		}
 
-		int newSelected = m_chatRoomList.GetSelectedRow();
+		int currentlySelectedChat = m_chatRoomList.GetSelectedRow();
 
-		if (m_lastSelectedChatIdx != -1 && newSelected == -1) {
+		if (m_lastSelectedChatIdx != -1 && currentlySelectedChat == -1) {
 			m_chatRoomList.SelectRow(m_lastSelectedChatIdx);
-			newSelected = m_lastSelectedChatIdx;
+			currentlySelectedChat = m_lastSelectedChatIdx;
 		}
 
-		if ( m_lastSelectedChatIdx != newSelected) {
-			auto lastSelectedChat =pluginPDArp.m_devices.Get(m_pdaId).chatRooms.Get(m_lastSelectedChatIdx);
+		if ( m_lastSelectedChatIdx != currentlySelectedChat) {
+			lastSelectedChat = pluginPDArp.m_devices.Get(m_pdaId).chatRooms.Get(m_lastSelectedChatIdx);
 			m_lastSelectedChatIdx = m_chatRoomList.GetSelectedRow();
 			if (lastSelectedChat && lastSelectedChat.unread > 0) {
 				lastSelectedChat.unread = 0;
@@ -289,6 +290,13 @@ class PDArpMenu extends UIScriptedMenu
 		}
 		
 		if (!m_active) {
+			if (m_lastSelectedChatIdx == currentlySelectedChat) {
+				lastSelectedChat =pluginPDArp.m_devices.Get(m_pdaId).chatRooms.Get(m_lastSelectedChatIdx);
+				if (lastSelectedChat && lastSelectedChat.unread > 0) {
+					lastSelectedChat.unread = 0;
+					GetRPCManager().SendRPC( PDArpModPreffix, "MsgAck", new Param2<string, string>( m_pdaId, lastSelectedChat.id ), true );
+				}
+			}
 			GetGame().GetUIManager().Back();
 		}
 	}
