@@ -18,12 +18,14 @@ class ChatPreferences {
 	string name;
 	bool muted;
 	int unread;
+	int lastUpdated;
 	
 	void ChatPreferences(string _id, string _name, bool _muted) {
 		id = _id;
 		name = _name;
 		muted = _muted;
 		unread = 0;
+		lastUpdated = CF_Date.Now().GetTimestamp();
 	}
 }
 
@@ -37,7 +39,7 @@ class ChatMessage {
 		id = _id;
 		sender_id = deviceId;
 		message = txt;
-		//TODO: Get time now
+		time = CF_Date.Now().GetTimestamp();
 	}
 }
 
@@ -121,6 +123,20 @@ class DeviceMemory {
 
 		PDArpLog.Debug("Saved device to file" + id);
 	}
+
+	void SortChatRooms() {
+		int i;
+		int j;
+		int n = chatRooms.Count();
+		for (i = 0; i < n; i++) {
+			for (j = 0; j < n; j++) {
+				if (chatRooms.Get(i).lastUpdated > chatRooms.Get(j).lastUpdated) {
+					chatRooms.SwapItems(i, j);				
+				}
+			}
+		}
+	}
+
 
 	ref PDArpContact GetContact(string _id) {
 		foreach (auto contact: contacts) {
@@ -354,25 +370,24 @@ class PluginPDArp extends PluginBase
 		ref array<ItemPDA> pdas;
 
 		if (GetGame().IsServer()) {
-			Param3<string, string, string > serverData;			
+			Param3<string, string, ChatMessage > serverData;			
 			if ( !ctx.Read( serverData ) ) return;
 			
 			deviceId = serverData.param1;
 			roomId = serverData.param2;
-			string txt = serverData.param3;
-
-			auto txDevice = m_devices.Get(deviceId);
-			auto txPrefs = txDevice.GetChatPreferences(roomId);
-			if (txPrefs.unread > 0) {
-				txPrefs.unread = 0;
-				txDevice.SaveToFile();
-			}
+			ref ChatMessage message = serverData.param3;
 	
 			PDArpLog.Trace("Client " + sender.GetPlainId() + " sending meessage from device " + deviceId + " to chat room " + roomId);
 
 			auto room = m_rooms.Get(roomId);
 			if (room != null) {
-				ref ChatMessage message = new ref ChatMessage(room.messages.Count(), deviceId, txt);
+				auto txDevice = m_devices.Get(deviceId);
+				auto txPrefs = txDevice.GetChatPreferences(roomId);
+				if (txPrefs.unread > 0) {
+					txPrefs.unread = 0;
+					txPrefs.lastUpdated = message.time;
+					txDevice.SaveToFile();
+				}
 				room.messages.Insert(message);
 				foreach(auto participant: room.deviceIds) {
 					auto players = GetPlayersCloseToPDA(participant);
@@ -380,6 +395,7 @@ class PluginPDArp extends PluginBase
 					auto roomPrefs = rxDevice.GetChatPreferences(roomId);
 					if (roomPrefs && rxDevice.id != deviceId) {
 						roomPrefs.unread = roomPrefs.unread + 1;
+						roomPrefs.lastUpdated = message.time;
 						rxDevice.SaveToFile();
 					}
 					foreach(auto player: players) {
@@ -423,6 +439,7 @@ class PluginPDArp extends PluginBase
 				auto roomPref = mem.GetChatPreferences(roomId);
 				if (roomPref) {
 					roomPref.unread = roomPref.unread + 1;
+					roomPref.lastUpdated = CF_Date.Now().GetTimestamp();
 				}
 			}
 			

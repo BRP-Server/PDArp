@@ -116,8 +116,19 @@ class PDArpMenu extends UIScriptedMenu
 
 		ChatRoom chatRoom;
 		if (mem != null) {
-			// TODO: Sort chatRooms by last message date desc
-			foreach(auto chatRoomPref: mem.chatRooms) {
+			ChatPreferences lastChatSelected;
+			if (m_lastSelectedChatIdx != -1) {
+				lastChatSelected = mem.chatRooms.Get(m_lastSelectedChatIdx);
+			}
+			mem.SortChatRooms();
+			int idx;
+			for (idx = 0; idx < mem.chatRooms.Count(); idx++) {
+				auto chatRoomPref = mem.chatRooms.Get(idx);
+				if (chatRoomPref.id == lastChatSelected.id) {
+					m_lastSelectedChatIdx = idx;
+					m_chatRoomList.SelectRow(idx);
+				}
+
 				chatRoom = pluginPDArp.m_rooms.Get(chatRoomPref.id);
 				if (chatRoom) {
 					string roomName;
@@ -363,16 +374,19 @@ class PDArpMenu extends UIScriptedMenu
 
 		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 		
-		string message = m_sendMsgInput.GetText();
-		if (message.LengthUtf8() > 0) {
-			if (message.LengthUtf8() > m_messageMaxLength) {
-				message = message.Substring(0, m_messageMaxLength);
+		string txt = m_sendMsgInput.GetText();
+		if (txt.LengthUtf8() > 0) { 
+			if (txt.LengthUtf8() > m_messageMaxLength) {
+				txt = txt.Substring(0, m_messageMaxLength);
 			}
 			ChatPreferences roomPrefs = mem.chatRooms.Get(m_lastSelectedChatIdx);
 			if (roomPrefs.unread > 0) {
 				roomPrefs.unread = 0;
 			}
-			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, string>( m_pdaId, roomPrefs.id, message ), true );
+			auto room = pluginPDArp.m_rooms.Get(roomPrefs.id);
+			ChatMessage message = new ref ChatMessage(room.messages.Count(), m_pdaId, txt);
+			roomPrefs.lastUpdated = message.time;
+			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( m_pdaId, roomPrefs.id, message), true );
 			m_sendMsgInput.SetText("");
 			return true;
 		}
