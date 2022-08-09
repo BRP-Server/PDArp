@@ -158,7 +158,7 @@ class DeviceMemory {
 }
 
 class PDArpState {
-	int lastId = 0;
+	int lastId = 1;
 
 	static ref PDArpState LoadFromFile() {
 		ref PDArpState state;
@@ -179,6 +179,7 @@ class PluginPDArp extends PluginBase
 	ref map<string, ref DeviceMemory> m_devices;
 	ref map<string, ref ChatRoom> m_rooms;
 	ref PDArpState m_state;
+	ref map<string, ItemPDA> m_entities;
 
 	ref PDArpMenu m_PDArpMenu;
 
@@ -186,6 +187,7 @@ class PluginPDArp extends PluginBase
 	{
 		m_devices = new ref map<string, ref DeviceMemory>;
 		m_rooms = new ref map<string, ref ChatRoom>;
+		m_entities = new ref map<string, ItemPDA>;
 	
         if (GetGame().IsServer()) {
 
@@ -443,8 +445,10 @@ class PluginPDArp extends PluginBase
 				}
 			}
 			
-			if (!IsOpen()) {
-				GetGame().GetPlayer().PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
+			if (!m_PDArpMenu || m_PDArpMenu.m_pdaId != deviceId) {
+				auto entity = m_entities.Get(deviceId);
+				if (entity)
+					entity.PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
 			}
 			
 			ref ChatRoom chatroom = m_rooms.Get(roomId);
@@ -504,14 +508,13 @@ class PluginPDArp extends PluginBase
 		ref array<Man> people;
 		GetGame().GetPlayers(people);
 		
+		auto pda = m_entities.Get(pdaId);
+		auto position = pda.GetPosition();
+		
 		foreach(auto p: people) {
 			ref PlayerBase player = PlayerBase.Cast(p);
-			auto pdas = GetWorkingPDAsOnPlayer(player);
-			foreach(auto pda: pdas) {
-				if(pda.GetMemoryID() == pdaId) {
-					players.Insert(player);
-					break;
-				}
+			if (Math.IsPointInCircle(position, 40, player.GetPosition())) {
+				players.Insert(player);
 			}
 			// TODO: Check around the player for pdas.
 		}

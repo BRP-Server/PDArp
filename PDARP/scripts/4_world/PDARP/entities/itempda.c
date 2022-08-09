@@ -10,6 +10,12 @@ class ItemPDA : ItemBase
 		}
 	}
 
+	void ~ItemPDA() {
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+		pluginPDArp.m_entities.Remove(hashedMemId);
+	}
+
 	private void GenerateMemoryIdentifier() {
 		if (memId == 0) {
 			PluginPDArp pluginPDArp;
@@ -22,7 +28,7 @@ class ItemPDA : ItemBase
 	}
 
 	string GetMemoryID() {
-		if (hashedMemId == "") {
+		if (hashedMemId == "" && memId !=  0) {
 			CF_TextReader reader = new CF_TextReader(new CF_StringStream(memId.ToString()));
 			CF_Base16Stream output = new CF_Base16Stream();
 			CF_SHA256.Process(reader, output);
@@ -48,6 +54,10 @@ class ItemPDA : ItemBase
 	}
 
 	override void AfterStoreLoad() {
+		GetMemoryID();
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+		pluginPDArp.m_entities.Set(hashedMemId, this);
 		SetSynchDirty();
 	}
 
@@ -122,6 +132,11 @@ class ItemPDA : ItemBase
 		if (PDArpDebugMode) Print(PDArpModPreffix + "OnVariablesSynchronized.");
 		hashedMemId = "";
 		GetMemoryID();
+		if (hashedMemId != "") {
+			PluginPDArp pluginPDArp;
+			Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+			pluginPDArp.m_entities.Set(hashedMemId, this);
+		}
 		UpdateVisualStyle();
 	}
 	
