@@ -229,6 +229,7 @@ class PluginPDArp extends PluginBase
 		GetRPCManager().AddRPC( PDArpModPreffix, "GetChatRoom", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "MsgAck", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "RenameChat", this, SingleplayerExecutionType.Both);
+		GetRPCManager().AddRPC( PDArpModPreffix, "ShowError", this, SingleplayerExecutionType.Both);
 	}
 
 	int GenerateMemoryIdentifier() {
@@ -236,6 +237,14 @@ class PluginPDArp extends PluginBase
 		m_state.lastId = n;
 		m_state.SaveToFile();
 		return n;
+	}
+
+	void ShowError( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		if (GetGame().IsClient() && m_PDArpMenu) {
+			Param1<string> clientData;			
+			if ( !ctx.Read( clientData ) ) return;
+			m_PDArpMenu.ShowError(clientData.param1);
+		}
 	}
 	
 	void MsgAck( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
@@ -503,7 +512,7 @@ class PluginPDArp extends PluginBase
 		return pdas;
 	}
 	
-	ref array<PlayerBase> GetPlayersCloseToPDA(string pdaId) {
+	ref array<PlayerBase> GetPlayersCloseToPDA(string pdaId, int distance = 50) {
 		ref array<PlayerBase> players = new ref array<PlayerBase>;
 		ref array<Man> people;
 		GetGame().GetPlayers(people);
@@ -513,7 +522,7 @@ class PluginPDArp extends PluginBase
 		
 		foreach(auto p: people) {
 			ref PlayerBase player = PlayerBase.Cast(p);
-			if (Math.IsPointInCircle(position, 40, player.GetPosition())) {
+			if (Math.IsPointInCircle(position, distance, player.GetPosition())) {
 				players.Insert(player);
 			}
 			// TODO: Check around the player for pdas.
@@ -533,8 +542,26 @@ class PluginPDArp extends PluginBase
 			auto mem1 = m_devices.Get(fromDevice);
 			auto mem2 = m_devices.Get(contact.id);
 
+			GetPlayersCloseToPDA(contact.id);
+
 			// TODO: Show error in UI
-			if (mem1 == null || mem2 == null) return;
+			if (mem1 == null || mem2 == null) {
+				GetRPCManager().SendRPC( PDArpModPreffix, "ShowError", new Param1<string>( "The id doesn't match an existing device" ), true, sender );
+				return;
+			};
+
+			auto players = GetPlayersCloseToPDA(contact.id, 15);
+			bool isTooFar = true;
+			foreach(auto closePlayer: players) {
+				if (closePlayer.GetIdentity().GetPlainId() == sender.GetPlainId()) {
+					isTooFar = false;
+				}
+			}
+
+			if (isTooFar) {
+				GetRPCManager().SendRPC( PDArpModPreffix, "ShowError", new Param1<string>( "You must be within 15m of the contact's device"), true, sender );
+				return;
+			}
 
 			PDArpLog.Debug("Client " + sender.GetPlainId() + " adding contact " + contact.id + " to device " + fromDevice);
 
@@ -567,8 +594,6 @@ class PluginPDArp extends PluginBase
 			GetRPCManager().SendRPC( PDArpModPreffix, "GetChatRoom", new Param1<ChatRoom>( room ), true, sender );
 			GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", null, true, sender );
 
-			// Update the added contact's pda
-			auto players = GetPlayersCloseToPDA(mem2.id);
 			foreach(auto p: players) {
 				auto pdas = GetWorkingPDAsOnPlayer(p);
 				foreach (auto pda: pdas) {
