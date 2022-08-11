@@ -1,0 +1,344 @@
+FrameWidgetClass rootFrame {
+ position -3.72001 -3.72001
+ size 1926.71997 1085.88
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ {
+  PanelWidgetClass "Background Blur" {
+   ignorepointer 1
+   color 0 0 0 0.2353
+   position 15.4682 11.2858
+   size 1945.27991 1094.64001
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   style rover_sim_colorable
+   {
+    ImageWidgetClass "PDA Case" {
+     ignorepointer 1
+     position 662.48004 72.51951
+     size 620.32001 949.60095
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     imageTexture "{BB97D86DD282B633}PDArp/scripts/layouts/img/PhoneV1.edds"
+     mode blend
+     "src alpha" 1
+     "no wrap" 1
+     stretch 1
+     {
+      CanvasWidgetClass "Screen On" {
+       ignorepointer 1
+       position 68.55061 99.6739
+       size 501.849 768.13403
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       {
+        PanelWidgetClass HomePage {
+         visible 1
+         ignorepointer 1
+         color 0.8706 0.8706 0.8706 1
+         position -0.084 -2.13199
+         size 502.68799 766.24402
+         hexactpos 1
+         vexactpos 1
+         hexactsize 1
+         vexactsize 1
+         style rover_sim_colorable
+         {
+          ImageWidgetClass TopBar {
+           ignorepointer 1
+           position -2.63198 -0.116
+           size 504.88397 38.28
+           hexactpos 1
+           vexactpos 1
+           hexactsize 1
+           vexactsize 1
+           imageTexture "{7CC429936C15F5C4}PDArp/scripts/layouts/img/Notifbar.edds"
+           "src alpha" 1
+           "no wrap" 1
+           stretch 1
+          }
+          ContentWidgetClass "Messages Canvas" {
+           visible 1
+           ignorepointer 1
+           position 5.97603 42.776
+           size 104.6 103.468
+           hexactpos 1
+           vexactpos 1
+           hexactsize 1
+           vexactsize 1
+           {
+            ImageWidgetClass Mail_icon {
+             ignorepointer 1
+             position 7.736 4.34002
+             size 87.62 74.036
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             imageTexture "{A45F8087636E2173}PDArp/scripts/layouts/img/Email-Icon.edds"
+             mode blend
+             "src alpha" 1
+             "no wrap" 1
+             stretch 1
+             filter 1
+            }
+            TextWidgetClass Messages_txt {
+             ignorepointer 1
+             color 0 0 0 1
+             position 3.784 79.336
+             size 96.3 21.4
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             text "Messages"
+             font "gui/fonts/metron-bold22"
+             "text color" 0 0 0 1
+             "exact text" 0
+             "text halign" center
+            }
+            ButtonWidgetClass Mssge_btn {
+             position 0.60001 0.60001
+             size 104.4 104.4
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+            }
+           }
+          }
+         }
+        }
+        PanelWidgetClass MessagesPage {
+         visible 1
+         ignorepointer 1
+         color 0.2 0.2196 0.2706 1
+         position -8.31936 -2.93089
+         size 510.27902 765.24097
+         hexactpos 1
+         vexactpos 1
+         hexactsize 1
+         vexactsize 1
+         style rover_sim_colorable
+         {
+          ImageWidgetClass Notifbar {
+           ignorepointer 1
+           position 0.94401 2.268
+           size 509.228 38.272
+           hexactpos 1
+           vexactpos 1
+           hexactsize 1
+           vexactsize 1
+           imageTexture "{7CC429936C15F5C4}PDArp/scripts/layouts/img/Notifbar.edds"
+           "src alpha" 1
+           "no wrap" 1
+           stretch 1
+          }
+          PanelWidgetClass chatroom_panel {
+           visible 1
+           ignorepointer 1
+           color 0.2863 0.2863 0.2863 0.2
+           position 6.448 39.872
+           size 156.164 352.18399
+           hexactpos 1
+           vexactpos 1
+           hexactsize 1
+           vexactsize 1
+           style editor_quad_dark
+           {
+            TextListboxWidgetClass chatroom_list {
+             visible 1
+             clipchildren 1
+             color 0 0 0 0.3176
+             position 0 50
+             size 155.18401 301.20001
+             halign left_ref
+             valign top_ref
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             style Default
+             "title visible" 1
+             colums "  Contacts & Groups;90;   ;10;"
+             lines 1
+             "highlight row" 1
+             font "gui/fonts/metronlight16"
+            }
+            ImageWidgetClass Newchat {
+             ignorepointer 1
+             position 0.75198 -2.32001
+             size 52.768 51.344
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             imageTexture "{F07896E9CC08012E}PDArp/scripts/layouts/img/NewChatIco.edds"
+             mode blend
+             "src alpha" 1
+             "no wrap" 1
+             stretch 1
+             filter 1
+             {
+              ButtonWidgetClass new_btn {
+               color 0.6392 0.6392 0.6392 0.098
+               position 2.38398 0.896
+               size 48.3994 49.664
+               hexactpos 1
+               vexactpos 1
+               hexactsize 1
+               vexactsize 1
+               font "gui/fonts/metronlight16"
+              }
+             }
+            }
+            ImageWidgetClass RemoveChat {
+             ignorepointer 1
+             position 109.712 2.168
+             size 43.752 45.64
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             imageTexture "{D44650A78F99E659}PDArp/scripts/layouts/img/MinusSign.edds"
+             mode blend
+             "src alpha" 1
+             "no wrap" 1
+             stretch 1
+             {
+              ButtonWidgetClass delete_btn {
+               color 0.6392 0.6392 0.6392 0.098
+               position -0.472 0.144
+               size 48 48
+               hexactpos 1
+               vexactpos 1
+               hexactsize 1
+               vexactsize 1
+               style Default
+              }
+             }
+            }
+            PanelWidgetClass ContactsBorder {
+             ignorepointer 1
+             color 0 0 0 1
+             position 0.43201 -2.512
+             size 155.45599 354.17603
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             style Outline
+            }
+            PanelWidgetClass ContactsBorder0 {
+             ignorepointer 1
+             color 0 0 0 1
+             position 0.43201 0.624
+             size 155.45599 49.28
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             style Outline
+            }
+            TextListboxWidgetClass messages_txt {
+             ignorepointer 0
+             color 0 0 0 1
+             position 156.70399 39.28
+             size 345.30399 648.60498
+             hexactpos 1
+             vexactpos 1
+             hexactsize 1
+             vexactsize 1
+             "title visible" 1
+             colums "#pda_sender;45;#pda_message;85;"
+             lines 1
+             "highlight row" 1
+             font "gui/fonts/metronlight16"
+            }
+           }
+          }
+          TextWidgetClass your_id_text {
+           color 0 0 0 1
+           position 108.976 4.43199
+           size 231.168 34.576
+           hexactpos 1
+           vexactpos 1
+           hexactsize 1
+           vexactsize 1
+           style Normal
+           text "PDA ID:"
+           font "gui/fonts/metronlight28"
+           "text offset" 10 0
+           "exact text" 1
+           "text valign" center
+          }
+         }
+        }
+        PanelWidgetClass DetailBorder {
+         visible 1
+         ignorepointer 1
+         color 0 0 0 1
+         position -0.42336 -0.46689
+         size 502.95099 765.97705
+         hexactpos 1
+         vexactpos 1
+         hexactsize 1
+         vexactsize 1
+         style Outline
+        }
+       }
+      }
+      ButtonWidgetClass Power_btn {
+       position 461.082 0.47589
+       size 76.1169 11.6182
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       style Default
+       switch toggle
+      }
+      ButtonWidgetClass Unmute_btn {
+       position 1.31982 144.489
+       size 10.1581 77.577
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+      }
+      ButtonWidgetClass Mute_btn {
+       position 1.01172 223.05301
+       size 10.1581 77.577
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+      }
+      ImageWidgetClass BRPLogo_Optional {
+       ignorepointer 1
+       position 520.32404 863.21204
+       size 45.132 42.148
+       hexactpos 1
+       vexactpos 1
+       hexactsize 1
+       vexactsize 1
+       imageTexture "{17390ECE4F9135D8}PDArp/scripts/layouts/img/BRPLogo.edds"
+       mode blend
+       "src alpha" 1
+       "no wrap" 1
+       stretch 1
+      }
+     }
+    }
+   }
+  }
+ }
+}
