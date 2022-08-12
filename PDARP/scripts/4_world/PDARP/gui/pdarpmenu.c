@@ -108,8 +108,8 @@ class PDArpMenu extends UIScriptedMenu
 		
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-		
-        int itemId;
+
+		int itemId;
 		m_chatRoomList.ClearItems();
 
 		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
@@ -181,6 +181,14 @@ class PDArpMenu extends UIScriptedMenu
 		
 		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 		ChatPreferences selectedChat = mem.chatRooms.Get(id);
+		
+		if (selectedChat.muted) {
+			m_muteRoomBtn.SetText("Unmute");
+			m_muteRoomBtn.SetColor(ARGB(255, 128, 0, 0));
+		} else {
+			m_muteRoomBtn.SetText("Mute");
+			m_muteRoomBtn.SetColor(ARGB(166, 0, 0, 0));
+		}
 		
 		m_messagesList.ClearItems();
 		
@@ -465,6 +473,23 @@ class PDArpMenu extends UIScriptedMenu
 		GetRPCManager().SendRPC( PDArpModPreffix, "AddContact", new Param2<string, PDArpContact>( m_pdaId, contact), true );
 		return true;
 	}
+
+	void ToggleMute() {
+		PluginPDArp pluginPDArp;
+		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
+		auto mem = pluginPDArp.m_devices.Get(m_pdaId);
+		auto roomPrefs = mem.chatRooms.Get(m_lastSelectedChatIdx);
+		roomPrefs.muted = !roomPrefs.muted;
+		GetRPCManager().SendRPC( PDArpModPreffix, "ToggleMute", new Param2<string, string>( m_pdaId, roomPrefs.id), true );
+
+		if (roomPrefs.muted) {
+			m_muteRoomBtn.SetText("Unmute");
+			m_muteRoomBtn.SetColor(ARGB(255, 128, 0, 0));
+		} else {
+			m_muteRoomBtn.SetText("Mute");
+			m_muteRoomBtn.SetColor(ARGB(166, 0, 0, 0));
+		}
+	}
 	
 	override bool OnClick(Widget w, int x, int y, int button) {
 		super.OnClick(w, x, y, button);
@@ -494,6 +519,11 @@ class PDArpMenu extends UIScriptedMenu
 				} else {
 					CloseRenameInput();
 				}
+				return true;
+			}
+
+			if (w == m_muteRoomBtn) {
+				ToggleMute();
 				return true;
 			}
 			

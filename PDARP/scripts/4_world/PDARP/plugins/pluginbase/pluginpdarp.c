@@ -230,6 +230,7 @@ class PluginPDArp extends PluginBase
 		GetRPCManager().AddRPC( PDArpModPreffix, "MsgAck", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "RenameChat", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "ShowError", this, SingleplayerExecutionType.Both);
+		GetRPCManager().AddRPC( PDArpModPreffix, "ToggleMute", this, SingleplayerExecutionType.Both);
 	}
 
 	int GenerateMemoryIdentifier() {
@@ -257,6 +258,21 @@ class PluginPDArp extends PluginBase
 			auto mem = m_devices.Get(deviceId);
 			auto room = mem.GetChatPreferences(roomId);
 			room.unread = 0;
+			mem.SaveToFile();
+		}
+	}
+
+	void ToggleMute( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		if (GetGame().IsServer()) {
+			Param2<string, string> serverData;			
+			if ( !ctx.Read( serverData ) ) return;		
+			string deviceId = serverData.param1;
+			string roomId = serverData.param2;
+
+			auto mem = m_devices.Get(deviceId);
+			auto room = mem.GetChatPreferences(roomId);
+			room.muted = !room.muted;
+			mem.SaveToFile();
 		}
 	}
 
@@ -409,11 +425,13 @@ class PluginPDArp extends PluginBase
 						roomPrefs.lastUpdated = message.time;
 						rxDevice.SaveToFile();
 					}
-					foreach(auto player: players) {
-						auto playerIdentity = player.GetIdentity();
-						PDArpLog.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
-						// This should play a sound on the client.
-						GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
+					if (!roomPrefs.muted) {
+						foreach(auto player: players) {
+							auto playerIdentity = player.GetIdentity();
+							PDArpLog.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
+							// This should play a sound on the client.
+							GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
+						}
 					}
 				}
 				room.msgCount = room.msgCount + 1;

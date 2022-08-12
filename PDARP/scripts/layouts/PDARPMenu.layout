@@ -13,7 +13,7 @@ FrameWidgetClass PDArpMenu {
   PanelWidgetClass Background {
    visible 1
    color 0 0 0 0.65
-   position 0 0
+   position 1.60475 0
    size 1 1
    hexactpos 1
    vexactpos 1
@@ -263,12 +263,14 @@ FrameWidgetClass PDArpMenu {
        font "gui/fonts/metronlight16"
       }
       ButtonWidgetClass mute_room_btn {
+       color 0 0 0 0.651
        position 707.87201 1.28516
        size 130 48
        hexactpos 1
        vexactpos 1
        hexactsize 1
        vexactsize 1
+       style Colorable
        "no focus" 0
        text "Mute"
        font "gui/fonts/metronlight16"
