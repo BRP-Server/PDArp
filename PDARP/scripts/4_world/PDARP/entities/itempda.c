@@ -66,8 +66,7 @@ class ItemPDA : ItemBase
 	override void EEInit()
 	{
 		super.EEInit();
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "EEInit.");
+		PDArpLog.Debug("ItemPDA EEInit");
 		UpdateVisualStyle();
 	}
 	
@@ -76,62 +75,55 @@ class ItemPDA : ItemBase
 		super.SetActions();
 		
 		AddAction(ActionOpenPDA);
-		if (PDArpDebugMode) Print(PDArpModPreffix + "SetActions.");
+		PDArpLog.Debug("ItemPDA SetActions");
 	}
 	
 	override void OnIsPlugged(EntityAI source_device)
 	{
 		super.OnIsPlugged(source_device);
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnIsPlugged.");
+		PDArpLog.Debug("ItemPDA OnIsPlugged");
 		SetVisualStyle(1);
 	}
 	
 	override void OnIsUnplugged(EntityAI last_energy_source)
 	{
 		super.OnIsUnplugged(last_energy_source);
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnIsUnplugged.");
+		PDArpLog.Debug("ItemPDA OnIsUnplugged");
 		SetVisualStyle(0);
 	}
 	
 	override void OnWork(float consumed_energy)
 	{
 		super.OnWork(consumed_energy);
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnWork.");
+		PDArpLog.Debug("ItemPDA OnWork");
 		UpdateVisualStyle();
 	}
 	
 	override void OnWorkStart() 
 	{
 		super.OnWorkStart();
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnWorkStart.");
+		PDArpLog.Debug("ItemPDA OnWorkStart");
 		UpdateVisualStyle();
 	}
 	
 	override void OnWorkStop() 
 	{
 		super.OnWorkStop();
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnWorkStop.");
+		PDArpLog.Debug("ItemPDA OnWorkStop");
 		UpdateVisualStyle();
 	}
 	
 	override void OnInitEnergy() 
 	{
 		super.OnInitEnergy();
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnInitEnergy.");
+		PDArpLog.Debug("ItemPDA OnInitEnergy");
 		UpdateVisualStyle();
 	}
 	
 	override void OnVariablesSynchronized()
 	{
 		super.OnVariablesSynchronized();
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "OnVariablesSynchronized.");
+		PDArpLog.Debug("ItemPDA OnVariablesSynchronized");
 		hashedMemId = "";
 		GetMemoryID();
 		if (hashedMemId != "") {
@@ -161,6 +153,6 @@ class ItemPDA : ItemBase
 		TStringArray textures = GetHiddenSelectionsTextures();
 		string texture = textures.Get(id);
 		SetObjectTexture(0, texture);
-		if (PDArpDebugMode) Print(PDArpModPreffix + "Change PDA texture to " + id + " =>" + texture);
+		PDArpLog.Trace("ItemPDA Change texture to " + id + " => " + texture);
 	}
 };

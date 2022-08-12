@@ -218,8 +218,7 @@ class PluginPDArp extends PluginBase
 		if (GetGame().IsClient()) {
 
 		}
-        
-		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp construct.");
+        PDArpLog.Debug("PluginPDArp constructor");
 	}
 	
 	override void OnInit(){
@@ -231,6 +230,7 @@ class PluginPDArp extends PluginBase
 		GetRPCManager().AddRPC( PDArpModPreffix, "RenameChat", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "ShowError", this, SingleplayerExecutionType.Both);
 		GetRPCManager().AddRPC( PDArpModPreffix, "ToggleMute", this, SingleplayerExecutionType.Both);
+		PDArpLog.Debug("PluginPDArp OnInit");
 	}
 
 	int GenerateMemoryIdentifier() {
@@ -283,7 +283,7 @@ class PluginPDArp extends PluginBase
 			if ( !ctx.Read( serverData ) ) return;
 
 			string deviceId = serverData.param1;
-			PDArpLog.Trace("Client " + sender.GetPlainId() + " is requestiog DeviceMemory for " + deviceId);
+			PDArpLog.Debug("Client " + sender.GetPlainId() + " is requestiog DeviceMemory for " + deviceId);
 
 			mem = m_devices.Get(deviceId);
 			if (!mem) {
@@ -291,7 +291,7 @@ class PluginPDArp extends PluginBase
 			}
 
 			if (!mem) {
-				PDArpLog.Debug("Creating new device memory for device " + deviceId);
+				PDArpLog.Info("Creating new device memory for device " + deviceId);
 				mem = new ref DeviceMemory(deviceId, new array<ref PDArpContact>, new array<ref ChatPreferences>);
 				m_devices.Insert(deviceId, mem);
 				mem.SaveToFile();
@@ -314,7 +314,7 @@ class PluginPDArp extends PluginBase
 			if ( !ctx.Read( clientData ) ) return;
 			
 			mem = clientData.param1;
-			PDArpLog.Trace("Received memory " + mem.id);
+			PDArpLog.Debug("Received memory " + mem.id);
 
 			m_devices.Set(mem.id, mem);
 			foreach(auto roomPref1: mem.chatRooms) {
@@ -330,7 +330,7 @@ class PluginPDArp extends PluginBase
 	}
 	
 	void GetChatRoom( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
-		ChatRoom room;
+		ChatRoom room;		
 		if (GetGame().IsServer()) {
 			Param1< string > serverData;			
 			if ( !ctx.Read( serverData ) ) return;
@@ -345,7 +345,7 @@ class PluginPDArp extends PluginBase
 			if ( !ctx.Read( clientData ) ) return;
 			
 			room = clientData.param1;
-			PDArpLog.Trace("Received room " + room.id);
+			PDArpLog.Debug("Received room " + room.id);
 
 			m_rooms.Set(room.id, room);
 
@@ -404,7 +404,7 @@ class PluginPDArp extends PluginBase
 			roomId = serverData.param2;
 			ref ChatMessage message = serverData.param3;
 	
-			PDArpLog.Trace("Client " + sender.GetPlainId() + " sending meessage from device " + deviceId + " to chat room " + roomId);
+			PDArpLog.Debug("Client " + sender.GetPlainId() + " sending message from device " + deviceId + " to chat room " + roomId);
 
 			auto room = m_rooms.Get(roomId);
 			if (room != null) {
@@ -448,7 +448,7 @@ class PluginPDArp extends PluginBase
 			roomId = clientData.param2;
 			ChatMessage msg = clientData.param3;
 			
-			PDArpLog.Trace("Received message for " + deviceId + " on room " + roomId);
+			PDArpLog.Debug("Received message for " + deviceId + " on room " + roomId);
 
 
 			auto gamePlayer = GetGame().GetPlayer();
@@ -638,28 +638,25 @@ class PluginPDArp extends PluginBase
 		}
 		
 		if (GetGame().GetUIManager().GetMenu() != NULL) {
-			if (PDArpDebugMode) Print(PDArpModPreffix + "OpenRecipesBookAction ActionCondition blocking by external menu: " + GetGame().GetUIManager().GetMenu());
+			PDArpLog.Debug("PluginPDArp OpenRecipesBookAction ActionCondition blocking by external menu: " + GetGame().GetUIManager().GetMenu());
 			return;
 		}
-		
-		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp prepare open menu");
+		PDArpLog.Debug("PluginPDArp prepare open menu");
 		m_PDArpMenu = new PDArpMenu;
 		m_PDArpMenu.Init();
 		GetGame().GetUIManager().ShowScriptedMenu( m_PDArpMenu, NULL );
-		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp post open menu: " + m_PDArpMenu);
+		PDArpLog.Debug("PluginPDArp post open menu " + m_PDArpMenu);
 	}
 
 	void Close() {
 		if (m_PDArpMenu) {
 			m_PDArpMenu.m_active = false;
 		}
-
-		if (PDArpDebugMode) Print(PDArpModPreffix + "PluginPDArp close menu: " + m_PDArpMenu);
+		PDArpLog.Debug("PluginPDArp close menu " + m_PDArpMenu);
 	}
 
 };
 
-class PluginPDArpSettings
-{
-
+class PluginPDArpSettings {
+	PDArpLogLevel logLevel = PDArpLogLevel.Info;
 };
