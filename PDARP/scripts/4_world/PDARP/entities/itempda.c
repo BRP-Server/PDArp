@@ -13,7 +13,9 @@ class ItemPDA : ItemBase
 	void ~ItemPDA() {
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-		pluginPDArp.m_entities.Remove(hashedMemId);
+		if (pluginPDArp && pluginPDArp.m_entities) {
+			pluginPDArp.m_entities.Remove(hashedMemId);
+		}
 	}
 
 	private void GenerateMemoryIdentifier() {
