@@ -124,7 +124,7 @@ class PDArpMenu extends UIScriptedMenu
 			int idx;
 			for (idx = 0; idx < mem.chatRooms.Count(); idx++) {
 				auto chatRoomPref = mem.chatRooms.Get(idx);
-				if (chatRoomPref.id == lastChatSelected.id) {
+				if (lastChatSelected && chatRoomPref.id == lastChatSelected.id) {
 					m_lastSelectedChatIdx = idx;
 					m_chatRoomList.SelectRow(idx);
 				}
