@@ -1,14 +1,14 @@
-class ActionOpenPDA extends ActionSingleUseBase
-{
-	void ActionOpenPDA()
-	{
-		PDArpLog.Debug("ActionOpenPDA construct.");
-		m_CommandUID        = DayZPlayerConstants.CMD_ACTIONMOD_OPENITEM_ONCE;
+class ActionOpenPDA extends ActionSingleUseBase {
+	PDArpLog logger;
+
+	void ActionOpenPDA() {
+		logger = GetPDArpLog();
+		logger.Debug("ActionOpenPDA construct.");
+		m_CommandUID      = DayZPlayerConstants.CMD_ACTIONMOD_OPENITEM_ONCE;
 		m_CommandUIDProne = DayZPlayerConstants.CMD_ACTIONFB_OPENITEM_ONCE;
 	}
 	
-	override void CreateConditionComponents()  
-	{	
+	override void CreateConditionComponents() {	
 		m_ConditionItem = new CCINonRuined;
 		m_ConditionTarget = new CCTNone;
 	}
@@ -65,7 +65,7 @@ class ActionOpenPDA extends ActionSingleUseBase
 		
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-		PDArpLog.Debug("ActionOpenPDA execute => Plug: " + pluginPDArp);
+		logger.Debug("ActionOpenPDA execute => Plug: " + pluginPDArp);
 		
 		if (pluginPDArp && !pluginPDArp.IsOpen())
 		{					

@@ -9,32 +9,49 @@ enum PDArpLogLevel {
 string logLevels[] = {"TRACE", "DEBUG", "INFO", "WARN", "ERROR"};
 
 class PDArpLog {
+	
+	PDArpLogLevel logLevel;
+	
+	void PDArpLog(PDArpLogLevel level) {
+		logLevel = level;
+	}
 
-    static private void Log(PDArpLogLevel level, string msg) {
-        PluginPDArp pluginPDArp;
-		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
-        if (pluginPDArp.m_settings.logLevel <= level) {
+    private void Log(PDArpLogLevel level, string msg) {
+        if (logLevel <= level) {
             Print(PDArpModPreffix + " [" + logLevels[level] + "] " + msg);
         }
     }
 
-    static void Trace(string msg) {
+    void SetLogLevel(PDArpLogLevel level) {
+        logLevel = level;
+    }
+
+    void Trace(string msg) {
         Log(PDArpLogLevel.Trace, msg);
     }
 
-    static void Debug(string msg) {
+    void Debug(string msg) {
         Log(PDArpLogLevel.Debug, msg);
     }
 
-    static void Info(string msg) {
+    void Info(string msg) {
         Log(PDArpLogLevel.Info, msg);
     }
 
-    static void Warn(string msg) {
+    void Warn(string msg) {
         Log(PDArpLogLevel.Warn, msg);
     }
 
-    static void Error(string msg) {
+    void Error(string msg) {
         Log(PDArpLogLevel.Error, msg);
     }
+}
+
+
+ref PDArpLog g_PDArpLog;
+ref PDArpLog GetPDArpLog() {
+	if (!g_PDArpLog) {
+		g_PDArpLog = new ref PDArpLog(PDArpLogLevel.Info)
+	}
+	return g_PDArpLog;
 }
