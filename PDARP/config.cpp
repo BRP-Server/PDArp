@@ -1,6 +1,6 @@
 class CfgPatches
 {
-	class PDArp_scripts
+	class PDArp
 	{
 		units[]={};
 		requiredAddons[]=

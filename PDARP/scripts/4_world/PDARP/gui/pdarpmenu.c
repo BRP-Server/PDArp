@@ -38,23 +38,21 @@ class PDArpMenu extends UIScriptedMenu
 	ref EditBoxWidget m_sendMsgInput;
 	ref ButtonWidget m_sendMsgBtn;
 
-	PDArpLog logger;
 
 
 	void PDArpMenu() {
-		logger = GetPDArpLog();
-		logger.Debug("PDArpMenu Construct");
+		GetPDArpLog().Debug("PDArpMenu Construct");
 	}	
 	
 	void ~PDArpMenu()
 	{
-		logger.Debug("PDArpMenu Destruct");
+		GetPDArpLog().Debug("PDArpMenu Destruct");
 		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		player.GetInputController().SetDisabled(false);
 	}
 
     override Widget Init() {
-		logger.Debug("PDArpMenu Init");
+		GetPDArpLog().Debug("PDArpMenu Init");
 		if (layoutRoot == null)
 			layoutRoot = GetGame().GetWorkspace().CreateWidgets( "PDArp/scripts/layouts/PDArpMenu.layout" );
 
@@ -105,7 +103,7 @@ class PDArpMenu extends UIScriptedMenu
     }
 	
 	void FillContactsList() {
-		logger.Debug("PDArpMenu FillContactsList");
+		GetPDArpLog().Debug("PDArpMenu FillContactsList");
 		
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
@@ -165,14 +163,14 @@ class PDArpMenu extends UIScriptedMenu
 	}
 	
 	void SelectConversation(int id) {
-		logger.Debug("PDArpMenu SelectConversation " + id);
+		GetPDArpLog().Debug("PDArpMenu SelectConversation " + id);
 
 		PluginPDArp pluginPDArp;
 		Class.CastTo(pluginPDArp, GetPlugin(PluginPDArp));
 		ref array<ref Param2<string, string>> confMessages = null;
 
 		if ( id == -1 ) {
-			logger.Debug("PDArpMenu SelectConversation - No need to select conversation " + id);
+			GetPDArpLog().Debug("PDArpMenu SelectConversation - No need to select conversation " + id);
 			m_messagesList.ClearItems();
 			m_chatPanel.Show(false, true);
 			return;
@@ -298,7 +296,7 @@ class PDArpMenu extends UIScriptedMenu
 		}
 		
 		if (m_dirty) {
-			logger.Debug("PDArpMenu Update refresh UI because of dirty state");
+			GetPDArpLog().Debug("PDArpMenu Update refresh UI because of dirty state");
 
 			auto mem = pluginPDArp.m_devices.Get(m_pdaId);
 			m_yourIdTxt.SetText("#pda_user_id " + m_pdaId);		
@@ -352,7 +350,7 @@ class PDArpMenu extends UIScriptedMenu
 	}
 
 	override bool OnKeyPress(Widget w, int x, int y, int key) {
-		logger.Trace("PDArpMenu OnKeyPress" + w.GetName());
+		GetPDArpLog().Trace("PDArpMenu OnKeyPress" + w.GetName());
 		
 		string boxText;
 		if (w.GetName() == m_addContactIdInput.GetName()) {
@@ -494,7 +492,7 @@ class PDArpMenu extends UIScriptedMenu
 	
 	override bool OnClick(Widget w, int x, int y, int button) {
 		super.OnClick(w, x, y, button);
-		logger.Trace("PDArpMenu OnClick " + w.GetName());
+		GetPDArpLog().Trace("PDArpMenu OnClick " + w.GetName());
 		
 		if (button == MouseState.LEFT)
 		{
@@ -571,7 +569,7 @@ class PDArpMenu extends UIScriptedMenu
 
 	override bool OnChange(Widget w, int x, int y, bool finished) {
 		super.OnChange(w, x, y, finished);
-		logger.Trace("PDArpMenu OnChange " + w.GetName());
+		GetPDArpLog().Trace("PDArpMenu OnChange " + w.GetName());
 		
 		string boxText;
 		if (w.GetName() == m_addContactIdInput.GetName()) {
@@ -600,7 +598,7 @@ class PDArpMenu extends UIScriptedMenu
 	override bool OnItemSelected(Widget w, int x, int y, int row, int  column,	int  oldRow, int  oldColumn)
 	{
 		super.OnItemSelected(w, x, y, row, column, oldRow, oldColumn);
-		logger.Trace("PDArpMenu OnItemSelected " + w.GetName());
+		GetPDArpLog().Trace("PDArpMenu OnItemSelected " + w.GetName());
 		
 		if (w == m_chatRoomList)
 		{
