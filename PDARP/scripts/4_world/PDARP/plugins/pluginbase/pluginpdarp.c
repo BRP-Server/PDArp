@@ -395,6 +395,7 @@ class PluginPDArp extends PluginBase
 		string deviceId;
 		string roomId;
 		ref array<ItemPDA> pdas;
+		ItemPDA entity;
 
 		if (GetGame().IsServer()) {
 			Param3<string, string, ChatMessage > serverData;			
@@ -416,8 +417,7 @@ class PluginPDArp extends PluginBase
 					txDevice.SaveToFile();
 				}
 				room.messages.Insert(message);
-				foreach(auto participant: room.deviceIds) {
-					auto players = GetPlayersCloseToPDA(participant);
+				foreach(auto participant: room.deviceIds) {	
 					auto rxDevice = m_devices.Get(participant);
 					auto roomPrefs = rxDevice.GetChatPreferences(roomId);
 					if (roomPrefs && rxDevice.id != deviceId) {
@@ -425,7 +425,9 @@ class PluginPDArp extends PluginBase
 						roomPrefs.lastUpdated = message.time;
 						rxDevice.SaveToFile();
 					}
-					if (!roomPrefs.muted) {
+					entity = m_entities.Get(participant);
+					if (!roomPrefs.muted && entity.CanWorkAsPDA()) {
+						auto players = GetPlayersCloseToPDA(participant);
 						foreach(auto player: players) {
 							auto playerIdentity = player.GetIdentity();
 							GetPDArpLog().Trace("Broadcasting message to " + playerIdentity.GetPlainId());
@@ -473,7 +475,7 @@ class PluginPDArp extends PluginBase
 			}
 			
 			if (!m_PDArpMenu || m_PDArpMenu.m_pdaId != deviceId) {
-				auto entity = m_entities.Get(deviceId);
+				entity = m_entities.Get(deviceId);
 				if (entity)
 					entity.PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
 			}
@@ -512,16 +514,7 @@ class PluginPDArp extends PluginBase
 		{
 			item = ItemPDA.Cast(itemsArray.Get(i));
 
-			if (!item)
-				continue;
-
-			if (item.IsRuined())
-				continue;
-
-			if (!item.HasEnergyManager())
-				continue;
-			
-			if (!item.GetCompEM().CanWork())
+			if (!item || !item.CanWorkAsPDA())
 				continue;
 
 			pdas.Insert(item);

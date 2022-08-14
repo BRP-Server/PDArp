@@ -155,4 +155,8 @@ class ItemPDA : ItemBase
 		SetObjectTexture(0, texture);
 		GetPDArpLog().Trace("ItemPDA Change texture to " + id + " => " + texture);
 	}
+
+	bool CanWorkAsPDA() {
+		return !IsRuined() && HasEnergyManager() && GetCompEM().CanWork();
+	}
 };
