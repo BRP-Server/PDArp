@@ -8,6 +8,7 @@ class PDArpContact {
 	string name;
 	
 	void PDArpContact(string _id, string _name) {
+		auto trace = CF_Trace_0(this, "PDArpContact");
 		id = _id;
 		name = _name;
 	}
@@ -21,6 +22,7 @@ class ChatPreferences {
 	int lastUpdated;
 	
 	void ChatPreferences(string _id, string _name, bool _muted) {
+		auto trace = CF_Trace_0(this, "ChatPreferences");
 		id = _id;
 		name = _name;
 		muted = _muted;
@@ -36,6 +38,7 @@ class ChatMessage {
 	int time;
 
 	void ChatMessage(int _id, string deviceId, string txt) {
+		auto trace = CF_Trace_0(this, "ChatMessage");
 		id = _id;
 		sender_id = deviceId;
 		message = txt;
@@ -57,6 +60,7 @@ class ChatRoom {
 	int msgCount;
 	
 	void ChatRoom(string _id, string _name, array<string> _devices) {
+		auto trace = CF_Trace_0(this, "ChatRoom");
 		id = _id;
 		name = _name;
 		deviceIds = _devices;
@@ -68,16 +72,19 @@ class ChatRoom {
 	}
 
 	static ref ChatRoom LoadFromFile(string _id) {
+		auto trace = CF_Trace_1("ChatRoom::LoadFromFile").Add(_id);
 		string room_path = PDARP_DATA_DIR_PATH + "\\room_" + _id + ".json";
 		if (FileExist(room_path)) {
 			ref ChatRoom room;
 			JsonFileLoader<ref ChatRoom>.JsonLoadFile(room_path, room);
+			CF_Log.Debug("Loaded chatroom from file " + _id);
 			return room;
 		}
 		return null;
 	}
 
 	void SaveToFile() {
+		auto trace = CF_Trace_0(this, "SaveToFile");
 		CF_Log.Debug("Saving room " + id);
 		string roomPath = PDARP_DATA_DIR_PATH + "\\room_" + id + ".json";
 		JsonFileLoader<ref ChatRoom>.JsonSaveFile(roomPath, this);
@@ -90,12 +97,14 @@ class DeviceMemory {
 	ref array<ref PDArpContact> contacts;
 
 	void DeviceMemory(string _id, ref array<ref PDArpContact> _contacts, ref array<ref ChatPreferences> _chatRooms) {
+		auto trace = CF_Trace_0(this, "DeviceMemory");
 		id = _id;
 		contacts = _contacts;
 		chatRooms = _chatRooms;
 	}
 
 	static ref DeviceMemory LoadFromFile(string _id) {
+		auto trace = CF_Trace_1("DeviceMemory::LoadFromFile").Add(_id);
 
 		string deviceContactsPath = PDARP_DATA_DIR_PATH + "\\device_contacts_" + _id + ".json";
 		string deviceChatRoomsPath = PDARP_DATA_DIR_PATH + "\\device_chatrooms_" + _id + ".json";
@@ -115,6 +124,7 @@ class DeviceMemory {
 	}
 
 	void SaveToFile() {
+		auto trace = CF_Trace_0(this, "SaveToFile");
 		string deviceContactsPath = PDARP_DATA_DIR_PATH + "\\device_contacts_" + id + ".json";
 		string deviceChatRoomsPath = PDARP_DATA_DIR_PATH + "\\device_chatrooms_" + id + ".json";
 
@@ -125,6 +135,7 @@ class DeviceMemory {
 	}
 
 	void SortChatRooms() {
+		auto trace = CF_Trace_0(this, "SortChatRooms");
 		int i;
 		int j;
 		int n = chatRooms.Count();
@@ -139,6 +150,7 @@ class DeviceMemory {
 
 
 	ref PDArpContact GetContact(string _id) {
+		auto trace = CF_Trace_0(this, "GetContact");
 		foreach (auto contact: contacts) {
 			if(contact.id == _id) {
 				return contact;
@@ -148,6 +160,7 @@ class DeviceMemory {
 	}
 
 	ref ChatPreferences GetChatPreferences(string _id) {
+		auto trace = CF_Trace_0(this, "GetChatPreferences");
 		foreach (auto room: chatRooms) {
 			if (room.id == _id) {
 				return room;
@@ -161,12 +174,14 @@ class PDArpState {
 	int lastId = 1;
 
 	static ref PDArpState LoadFromFile() {
+		auto trace = CF_Trace_0("PDArpState::LoadFromFile");
 		ref PDArpState state;
 		JsonFileLoader<ref PDArpState>.JsonLoadFile(PDARP_STATE_PATH, state);
 		return state;
 	}
 
 	void SaveToFile() {
+		auto trace = CF_Trace_0(this, "SaveToFile");
 		JsonFileLoader<ref PDArpState>.JsonSaveFile(PDARP_STATE_PATH, this);
 	}
 }
@@ -186,6 +201,7 @@ class PluginPDArp extends PluginBase
 
 	void PluginPDArp()
 	{
+		auto trace = CF_Trace_0(this, "PluginPDArp");
 		m_devices = new ref map<string, ref DeviceMemory>;
 		m_rooms = new ref map<string, ref ChatRoom>;
 		m_entities = new ref map<string, ItemPDA>;
@@ -221,6 +237,8 @@ class PluginPDArp extends PluginBase
 	}
 	
 	override void OnInit(){
+		auto trace = CF_Trace_0(this, "OnInit");
+
 		GetRPCManager().AddRPC( PDArpModPreffix, "AddContact", this, SingleplayerExecutionType.Both ); 
 		GetRPCManager().AddRPC( PDArpModPreffix, "SendMessage", this, SingleplayerExecutionType.Both );
 		GetRPCManager().AddRPC( PDArpModPreffix, "GetDeviceMemory", this, SingleplayerExecutionType.Both );
@@ -233,6 +251,7 @@ class PluginPDArp extends PluginBase
 	}
 
 	int GenerateMemoryIdentifier() {
+		auto trace = CF_Trace_0(this, "GenerateMemoryIdentifier");
 		int n = m_state.lastId + 1;
 		m_state.lastId = n;
 		m_state.SaveToFile();
@@ -240,6 +259,8 @@ class PluginPDArp extends PluginBase
 	}
 
 	void ShowError( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "ShowError");
+
 		if (GetGame().IsClient() && m_PDArpMenu) {
 			Param1<string> clientData;			
 			if ( !ctx.Read( clientData ) ) return;
@@ -248,6 +269,7 @@ class PluginPDArp extends PluginBase
 	}
 	
 	void MsgAck( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "MsgAck");
 		if (GetGame().IsServer()) {
 			Param2<string, string> serverData;			
 			if ( !ctx.Read( serverData ) ) return;		
@@ -262,6 +284,8 @@ class PluginPDArp extends PluginBase
 	}
 
 	void ToggleMute( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "ToggleMute");
+
 		if (GetGame().IsServer()) {
 			Param2<string, string> serverData;			
 			if ( !ctx.Read( serverData ) ) return;		
@@ -276,6 +300,7 @@ class PluginPDArp extends PluginBase
 	}
 
 	void GetDeviceMemory( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "GetDeviceMemory");
 		ref DeviceMemory mem;
 		if (GetGame().IsServer()) {
 			Param1< string > serverData;			
@@ -329,6 +354,8 @@ class PluginPDArp extends PluginBase
 	}
 	
 	void GetChatRoom( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "GetChatRoom");
+
 		ChatRoom room;		
 		if (GetGame().IsServer()) {
 			Param1< string > serverData;			
@@ -355,6 +382,8 @@ class PluginPDArp extends PluginBase
 	}
 
 	void RenameChat(CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "RenameChat");
+
 		string deviceId;
 		string roomId;
 
@@ -391,6 +420,8 @@ class PluginPDArp extends PluginBase
 	}
 
 	void SendMessage( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "SendMessage");
+
 		string deviceId;
 		string roomId;
 		ref array<ItemPDA> pdas;
@@ -495,6 +526,8 @@ class PluginPDArp extends PluginBase
 
 	// Players could have multiple PDAs on their inventory
 	ref array<ItemPDA> GetWorkingPDAsOnPlayer(PlayerBase player) {
+		auto trace = CF_Trace_0(this, "GetWorkingPDAsOnPlayer");
+
 		array<EntityAI> itemsArray = new array<EntityAI>;
 		array<ItemPDA> pdas = new array<ItemPDA>;
 		ref ItemPDA item;		
@@ -523,6 +556,8 @@ class PluginPDArp extends PluginBase
 	}
 	
 	ref array<PlayerBase> GetPlayersCloseToPDA(string pdaId, int distance = 50) {
+		auto trace = CF_Trace_0(this, "GetPlayersCloseToPDA");
+
 		ref array<PlayerBase> players = new ref array<PlayerBase>;
 		ref array<Man> people = new ref array<Man>;
 		GetGame().GetPlayers(people);
@@ -541,7 +576,9 @@ class PluginPDArp extends PluginBase
 		return players;
 	}
 	
-	void AddContact( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {        
+	void AddContact( CallType type, ref ParamsReadContext ctx, ref PlayerIdentity sender, ref Object target ) {
+		auto trace = CF_Trace_0(this, "AddContact");
+
         if( type == CallType.Server ) {
 			Param2< string, PDArpContact > serverData;
         	if ( !ctx.Read( serverData ) ) return;
@@ -623,6 +660,8 @@ class PluginPDArp extends PluginBase
 
 
 	void Open() {
+		auto trace = CF_Trace_0(this, "Open");
+
 		if (IsOpen()) {
 			Close();
 		}
@@ -639,6 +678,8 @@ class PluginPDArp extends PluginBase
 	}
 
 	void Close() {
+		auto trace = CF_Trace_0(this, "Close");
+
 		if (m_PDArpMenu) {
 			m_PDArpMenu.m_active = false;
 		}
