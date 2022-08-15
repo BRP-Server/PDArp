@@ -49,7 +49,7 @@ class ItemPDA : ItemBase
 		auto loaded = super.OnStoreLoad(ctx, version);
 		if (loaded) {
 			ctx.Read(memId);
-			GetPDArpLog().Trace("OnStoreLoad version: " + version);
+			CF_Log.Trace("OnStoreLoad version: " + version);
 			return true;
 		}
 		return loaded;
@@ -66,7 +66,7 @@ class ItemPDA : ItemBase
 	override void EEInit()
 	{
 		super.EEInit();
-		GetPDArpLog().Debug("ItemPDA EEInit");
+		CF_Log.Debug("ItemPDA EEInit");
 		UpdateVisualStyle();
 	}
 	
@@ -75,55 +75,55 @@ class ItemPDA : ItemBase
 		super.SetActions();
 		
 		AddAction(ActionOpenPDA);
-		GetPDArpLog().Debug("ItemPDA SetActions");
+		CF_Log.Debug("ItemPDA SetActions");
 	}
 	
 	override void OnIsPlugged(EntityAI source_device)
 	{
 		super.OnIsPlugged(source_device);
-		GetPDArpLog().Debug("ItemPDA OnIsPlugged");
+		CF_Log.Debug("ItemPDA OnIsPlugged");
 		SetVisualStyle(1);
 	}
 	
 	override void OnIsUnplugged(EntityAI last_energy_source)
 	{
 		super.OnIsUnplugged(last_energy_source);
-		GetPDArpLog().Debug("ItemPDA OnIsUnplugged");
+		CF_Log.Debug("ItemPDA OnIsUnplugged");
 		SetVisualStyle(0);
 	}
 	
 	override void OnWork(float consumed_energy)
 	{
 		super.OnWork(consumed_energy);
-		GetPDArpLog().Debug("ItemPDA OnWork");
+		CF_Log.Debug("ItemPDA OnWork");
 		UpdateVisualStyle();
 	}
 	
 	override void OnWorkStart() 
 	{
 		super.OnWorkStart();
-		GetPDArpLog().Debug("ItemPDA OnWorkStart");
+		CF_Log.Debug("ItemPDA OnWorkStart");
 		UpdateVisualStyle();
 	}
 	
 	override void OnWorkStop() 
 	{
 		super.OnWorkStop();
-		GetPDArpLog().Debug("ItemPDA OnWorkStop");
+		CF_Log.Debug("ItemPDA OnWorkStop");
 		UpdateVisualStyle();
 	}
 	
 	override void OnInitEnergy() 
 	{
 		super.OnInitEnergy();
-		GetPDArpLog().Debug("ItemPDA OnInitEnergy");
+		CF_Log.Debug("ItemPDA OnInitEnergy");
 		UpdateVisualStyle();
 	}
 	
 	override void OnVariablesSynchronized()
 	{
 		super.OnVariablesSynchronized();
-		GetPDArpLog().Debug("ItemPDA OnVariablesSynchronized");
+		CF_Log.Debug("ItemPDA OnVariablesSynchronized");
 		hashedMemId = "";
 		GetMemoryID();
 		if (hashedMemId != "") {
@@ -153,7 +153,7 @@ class ItemPDA : ItemBase
 		TStringArray textures = GetHiddenSelectionsTextures();
 		string texture = textures.Get(id);
 		SetObjectTexture(0, texture);
-		GetPDArpLog().Trace("ItemPDA Change texture to " + id + " => " + texture);
+		CF_Log.Trace("ItemPDA Change texture to " + id + " => " + texture);
 	}
 
 	bool CanWorkAsPDA() {

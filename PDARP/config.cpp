@@ -6,11 +6,11 @@ class CfgPatches
 		requiredAddons[]=
 		{
 			"DZ_Data",
-			"DZ_Scripts",
-			"JM_CF_Scripts"
+			"DZ_Scripts"
 		};
 	};
 };
+
 class CfgMods
 {
 	class PDArp
@@ -49,6 +49,7 @@ class CfgMods
 		};
 	};
 };
+
 class CfgVehicles
 {
 	class Inventory_Base;
@@ -149,6 +150,7 @@ class CfgVehicles
 		};
 	};
 };
+
 class CfgSoundShaders
 {
 	class baseCharacter_SoundShader;
@@ -170,6 +172,7 @@ class CfgSoundShaders
 		volume=0.5;
 	};
 };
+
 class CfgSoundSets
 {
 	class baseCharacter_SoundSet;
@@ -181,6 +184,7 @@ class CfgSoundSets
 		};
 	};
 };
+
 class CfgModels
 {
 	class Default;

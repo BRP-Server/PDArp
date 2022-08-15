@@ -4,6 +4,6 @@ modded class JMAnimRegister
     {
         super.OnRegisterOneHanded( pType, pBehavior );
 		pType.AddItemInHandsProfileIK("ItemPDA", "dz/anims/workspaces/player/player_main/props/player_main_1h_compass.asi", pBehavior, "dz/anims/anm/player/ik/gear/compass.anm");   
-		GetPDArpLog().Debug("PDArpMenu OnregisterOneHanded");
+		CF_Log.Debug("PDArpMenu OnregisterOneHanded");
     }
 };
