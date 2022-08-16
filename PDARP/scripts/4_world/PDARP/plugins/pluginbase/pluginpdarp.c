@@ -447,13 +447,15 @@ class PluginPDArp extends PluginBase
 				room.messages.Insert(message);
 				foreach(auto participant: room.deviceIds) {	
 					auto rxDevice = m_devices.Get(participant);
-					auto roomPrefs = rxDevice.GetChatPreferences(roomId);
-					if (roomPrefs && rxDevice.id != deviceId) {
-						roomPrefs.unread = roomPrefs.unread + 1;
-						roomPrefs.lastUpdated = message.time;
-						rxDevice.SaveToFile();
+					auto rxPrefs = rxDevice.GetChatPreferences(roomId);
+					if (rxPrefs) {
+						if (rxDevice.id != deviceId) {
+							rxPrefs.unread = rxPrefs.unread + 1;
+							rxPrefs.lastUpdated = message.time;
+							rxDevice.SaveToFile();
+						}
 						entity = m_entities.Get(participant);
-						if (!roomPrefs.muted && entity.CanWorkAsPDA()) {
+						if (!rxPrefs.muted && entity.CanWorkAsPDA()) {
 							auto players = GetPlayersCloseToPDA(participant);
 							foreach(auto player: players) {
 								auto playerIdentity = player.GetIdentity();
@@ -509,14 +511,14 @@ class PluginPDArp extends PluginBase
 			}
 			
 			ref ChatRoom chatroom = m_rooms.Get(roomId);
-			if (chatroom) {
+			if (chatroom && msg.sender_id != mem.id) {
 				if (chatroom.msgCount < msg.id) { // avoid dupes
 					chatroom.messages.Insert(msg);
 					chatroom.msgCount = msg.id;
 				}
 			}
 
-			if (m_PDArpMenu && m_PDArpMenu.m_pdaId == deviceId) {
+			if (msg.sender_id != mem.id && m_PDArpMenu && m_PDArpMenu.m_pdaId == deviceId) {
 				m_PDArpMenu.m_dirty = true;
 			}
 		}
