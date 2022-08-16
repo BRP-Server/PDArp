@@ -441,11 +441,9 @@ class PluginPDArp extends PluginBase
 			if (room != null) {
 				auto txDevice = m_devices.Get(deviceId);
 				auto txPrefs = txDevice.GetChatPreferences(roomId);
-				if (txPrefs.unread > 0) {
-					txPrefs.unread = 0;
-					txPrefs.lastUpdated = message.time;
-					txDevice.SaveToFile();
-				}
+				txPrefs.unread = 0;
+				txPrefs.lastUpdated = message.time;
+				txDevice.SaveToFile();
 				room.messages.Insert(message);
 				foreach(auto participant: room.deviceIds) {	
 					auto rxDevice = m_devices.Get(participant);
@@ -454,15 +452,15 @@ class PluginPDArp extends PluginBase
 						roomPrefs.unread = roomPrefs.unread + 1;
 						roomPrefs.lastUpdated = message.time;
 						rxDevice.SaveToFile();
-					}
-					entity = m_entities.Get(participant);
-					if (!roomPrefs.muted && entity.CanWorkAsPDA()) {
-						auto players = GetPlayersCloseToPDA(participant);
-						foreach(auto player: players) {
-							auto playerIdentity = player.GetIdentity();
-							CF_Log.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
-							// This should play a sound on the client.
-							GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
+						entity = m_entities.Get(participant);
+						if (!roomPrefs.muted && entity.CanWorkAsPDA()) {
+							auto players = GetPlayersCloseToPDA(participant);
+							foreach(auto player: players) {
+								auto playerIdentity = player.GetIdentity();
+								CF_Log.Trace("Broadcasting message to " + playerIdentity.GetPlainId());
+								// This should play a sound on the client.
+								GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( participant, roomId, message ), true, playerIdentity);
+							}
 						}
 					}
 				}
@@ -500,11 +498,11 @@ class PluginPDArp extends PluginBase
 				auto roomPref = mem.GetChatPreferences(roomId);
 				if (roomPref) {
 					roomPref.unread = roomPref.unread + 1;
-					roomPref.lastUpdated = CF_Date.Now().GetTimestamp();
+					roomPref.lastUpdated = msg.time;
 				}
 			}
-			
-			if (!m_PDArpMenu || m_PDArpMenu.m_pdaId != deviceId) {
+
+			if (!mem || !m_PDArpMenu || m_PDArpMenu.m_pdaId != mem.id) {
 				entity = m_entities.Get(deviceId);
 				if (entity)
 					entity.PlaySoundSet(effect, "messagePDA_SoundSet", 0, 0);
@@ -512,13 +510,13 @@ class PluginPDArp extends PluginBase
 			
 			ref ChatRoom chatroom = m_rooms.Get(roomId);
 			if (chatroom) {
-				if (chatroom.msgCount == msg.id) { // avoid dupes
+				if (chatroom.msgCount < msg.id) { // avoid dupes
 					chatroom.messages.Insert(msg);
-					chatroom.msgCount = msg.id + 1;
+					chatroom.msgCount = msg.id;
 				}
 			}
 
-			if (IsOpen() && m_PDArpMenu.m_pdaId == msg.sender_id) {
+			if (m_PDArpMenu && m_PDArpMenu.m_pdaId == deviceId) {
 				m_PDArpMenu.m_dirty = true;
 			}
 		}

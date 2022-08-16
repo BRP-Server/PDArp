@@ -402,14 +402,15 @@ class PDArpMenu extends UIScriptedMenu
 				txt = txt.Substring(0, m_messageMaxLength);
 			}
 			ChatPreferences roomPrefs = mem.chatRooms.Get(m_lastSelectedChatIdx);
-			if (roomPrefs.unread > 0) {
-				roomPrefs.unread = 0;
-			}
 			auto room = pluginPDArp.m_rooms.Get(roomPrefs.id);
-			ChatMessage message = new ref ChatMessage(room.messages.Count(), m_pdaId, txt);
+			ChatMessage message = new ref ChatMessage(room.msgCount + 1, m_pdaId, txt);
+			room.msgCount = room.msgCount + 1;
+			room.messages.Insert(message);
 			roomPrefs.lastUpdated = message.time;
+			roomPrefs.unread = 0;
 			GetRPCManager().SendRPC( PDArpModPreffix, "SendMessage", new Param3<string, string, ChatMessage>( m_pdaId, roomPrefs.id, message), true );
 			m_sendMsgInput.SetText("");
+			m_dirty = true;
 			return true;
 		}
 		
